@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block title %}信息反馈 - 气象数据可视化平台{% endblock %}
+
+{% block content %}
+<style>
+    .feedback-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+    .feedback-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .form-control {
+        border-radius: 8px;
+        padding: 12px;
+    }
+    .btn-submit {
+        background: #4361ee;
+        border-radius: 8px;
+        padding: 12px;
+    }
+</style>
+
+<!-- 添加Toast通知组件 -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="feedbackToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fas fa-info-circle text-primary me-2"></i>
+            <strong class="me-auto">系统提示</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body"></div>
+    </div>
+</div>
+
+<div class="feedback-container">
+    <div class="feedback-card p-4">
+        <h4 class="text-center mb-4">📩 提交反馈</h4>
+        
+        <form id="feedbackForm">
+            <div class="mb-3">
+                <label class="form-label">反馈类型</label>
+                <select class="form-select" name="type" required>
+                    <option value="" disabled selected>请选择...</option>
+                    <option value="bug">错误报告</option>
+                    <option value="suggestion">功能建议</option>
+                    <option value="other">其他反馈</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">详细描述</label>
+                <textarea class="form-control" name="content" rows="4" 
+                            required
+                            placeholder="请详细描述您的问题或建议"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">联系方式（可选）</label>
+                <input type="text" 
+                       class="form-control" 
+                       name="contact"
+                       placeholder="邮箱/手机号">
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-submit">
+                    提交反馈
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/feedback.js"></script>
+{% endblock %}

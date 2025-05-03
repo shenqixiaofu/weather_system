@@ -1,0 +1,208 @@
+{% extends "layout.html" %}
+{% block title %}气象数据观测站 - 数据可视化平台{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
+{% block content %}
+    <!-- 主内容 -->
+    <div class="container main-content">
+        <!-- 城市显示区域 -->
+        <div class="row mb-4" id="cityDisplay" style="display: none;">
+            <div class="col-12 text-center">
+                <h2 class="text-primary city-title">
+                    <i class="fas fa-city me-2"></i>
+                    <span id="currentCity"></span>天气数据
+                </h2>
+            </div>
+        </div>
+        
+        <!-- 搜索框 -->
+        <div class="search-container">
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    <div class="input-group">
+                        <input type="text" id="cityInput" class="form-control" placeholder="输入城市名称...">
+                        <button id="fetchBtn" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>查询
+                        </button>
+                    </div>
+                    <div id="currentTime" class="text-end">--:--:--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 加载提示 -->
+        <div class="row mt-3" id="loading" style="display: none;">
+            <div class="col-12 text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2">正在获取<span id="loadingCity"></span>的天气数据...</p>
+            </div>
+        </div>
+
+        <!-- 概览数据 -->
+        <div class="row mb-4 data-card justify-content-center gap-4" id="overviewCards">
+            <div class="col-auto">
+                <div class="card temp-card">
+                    <div class="card-body">
+                        <i class="fas fa-temperature-high"></i>
+                        <h5>当前温度</h5>
+                        <h3 id="currentTemp">--°C</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="card humidity-card">
+                    <div class="card-body">
+                        <i class="fas fa-tint"></i>
+                        <h5>湿度</h5>
+                        <h3 id="currentHumidity">--%</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="card wind-card">
+                    <div class="card-body">
+                        <i class="fas fa-wind"></i>
+                        <h5>风速</h5>
+                        <h3 id="currentWind">-- km/h</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="card wind-direction-card">
+                    <div class="card-body">
+                        <i class="fas fa-compass"></i>
+                        <h5>风向</h5>
+                        <h3 id="currentWindDirection">--</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="card weather-card">
+                    <div class="card-body">
+                        <i class="fas fa-sun"></i>
+                        <h5>天气状况</h5>
+                        <h3 id="currentWeather">--</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="row data-card" id="chartCards">
+             <div class="col-md-6 mb-4">
+                 <div class="card">
+                     <div class="card-header d-flex justify-content-between align-items-center">
+                         <h5 class="m-0"><i class="fas fa-temperature-high me-2"></i>温度曲线</h5>
+                         <div class="btn-group btn-group-sm" id="tempPeriodSelector">
+                             <button class="btn btn-outline-secondary active" data-period="day">日</button>
+                             <button class="btn btn-outline-secondary" data-period="week">周</button>
+                             <button class="btn btn-outline-secondary" data-period="month">月</button>
+                         </div>
+                     </div>
+                     <div class="card-body">
+                         <div id="tempChart" class="chart-container"></div>
+                     </div>
+                 </div>
+             </div>
+             <div class="col-md-6 mb-4">
+                 <div class="card">
+                     <div class="card-header">
+                         <h5 class="m-0"><i class="fas fa-chart-bar me-2"></i>近期降水量</h5>
+                     </div>
+                     <div class="card-body">
+                         <div id="rainfallChart" class="chart-container"></div>
+                     </div>
+                 </div>
+             </div>
+             <div class="col-md-6 mb-4">
+                 <div class="card">
+                     <div class="card-header">
+                         <h5 class="m-0"><i class="fas fa-chart-pie me-2"></i>气象因素分布(近30天)</h5>
+                     </div>
+                     <div class="card-body">
+                         <div id="weatherPieChart" class="chart-container"></div>
+                     </div>
+                 </div>
+             </div>
+             <div class="col-md-6 mb-4">
+                 <div class="card">
+                     <div class="card-header">
+                         <h5 class="m-0"><i class="fas fa-chart-line me-2"></i>气象指标雷达图</h5>
+                     </div>
+                     <div class="card-body">
+                         <div id="weatherRadarChart" class="chart-container"></div>
+                     </div>
+                 </div>
+             </div>
+             <div class="col-12 mb-4">
+                 <div class="card">
+                     <div class="card-header">
+                         <h5 class="m-0"><i class="fas fa-calendar-alt me-2"></i>一周天气预报</h5>
+                     </div>
+                     <div class="card-body">
+                         <div id="forecastChart" class="chart-container"></div>
+                     </div>
+                 </div>
+             </div>
+             <div class="col-12 mb-4">
+                 <div class="card">
+                     <div class="card-header">
+                         <h5 class="m-0"><i class="fas fa-cloud me-2"></i>天气词云</h5>
+                     </div>
+                     <div class="card-body">
+                         <div id="wordcloudChart" class="chart-container"></div>
+                     </div>
+                 </div>
+             </div>
+        </div>
+        <!-- 无数据提示 -->
+        <div class="row mt-5" id="noDataMessage">
+            <div class="col-12 text-center">
+                <div class="card p-5">
+                    <i class="fas fa-cloud-sun fa-5x mb-3"></i>
+                    <h3 class="text-primary">请输入城市名称查询天气数据</h3>
+                    <p class="text-muted mt-3">输入城市名称并点击查询按钮，获取最新天气信息</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 定位授权模态框 -->
+    <div class="modal fade" id="geoModal" tabindex="-1" aria-labelledby="geoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="geoModalLabel">允许地理定位？</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    为了提供更准确的天气信息，我们需要获取您的位置。
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="denyGeo">拒绝</button>
+                    <button type="button" class="btn btn-primary" id="allowGeo">允许</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 隐藏的输入框，用于存储默认城市 -->
+    <input type="hidden" id="defaultCity" value="{{ default_city }}">
+
+{% endblock %}
+{% block scripts %}
+    <script>
+        // 消息提示淡出
+        setTimeout(function() {
+            let alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => alert.style.opacity = 0);
+        }, 5000);
+    </script>
+    <script src="/static/echart/echarts.min.js"></script>
+    <script src="/static/echart/echarts-wordcloud.min.js"></script>
+    <script src="/static/js/index.js"></script>
+{% endblock %}

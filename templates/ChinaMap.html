@@ -1,0 +1,122 @@
+{% extends "layout.html" %}
+
+{% block title %}中国实时天气地图{% endblock %}
+
+{% block additional_head %}
+    <script src="{{ url_for('static', filename='echart/echarts.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='echart/china.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container main-content mt-4 px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 mb-4 overflow-hidden">
+                <div class="card-header map-header py-3 border-0 bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-primary mb-0 d-flex align-items-center">
+                                <i class="fas fa-map-marked-alt me-2"></i>中国实时天气地图
+                                <span class="badge bg-primary text-white ms-2 pulsate">
+                                    <i class="fas fa-sync-alt me-1"></i>实时数据
+                                </span>
+                            </h5>
+                            <p class="text-secondary mb-0 mt-1 small">探索全国各省市的实时温度数据</p>
+                        </div>
+                        <div class="d-none d-md-block">
+                            <span id="current-time" class="text-secondary small"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0 position-relative">
+                    <div id="map-container" class="map-container" style="width: 100%; height: 78vh;"></div>
+
+                    <div id="weather-detail" class="position-absolute top-0 end-0 m-3 p-3 weather-info-panel rounded shadow-sm d-none">
+                        <h6 id="province-name" class="border-bottom pb-2"></h6>
+                        <div id="weather-data" class="py-2"></div>
+                        <div class="text-end">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('weather-detail').classList.add('d-none')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-white border-top py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <div class="d-flex align-items-center text-muted small">
+                                <i class="fas fa-info-circle me-2 text-primary"></i>
+                                <span>点击省份查看详细温度信息 | 滚轮缩放 | 拖拽平移</span>
+                            </div>
+                            <div class="last-updated text-muted mt-1">
+                                <span>上次数据更新: <span id="last-updated">加载中...</span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-7 mt-3 mt-md-0">
+                            <div class="d-flex justify-content-md-end justify-content-center gap-2">
+                                <button id="legend-btn" class="btn btn-sm btn-outline-info btn-control">
+                                    <i class="fas fa-palette me-1"></i>显示/隐藏图例
+                                </button>
+                                <button id="fullscreen-btn" class="btn btn-sm btn-outline-primary btn-control">
+                                    <i class="fas fa-expand me-1"></i>全屏查看
+                                </button>
+                                <button id="reset-btn" class="btn btn-sm btn-outline-secondary btn-control">
+                                    <i class="fas fa-redo me-1"></i>重置视图
+                                </button>
+                                <button id="refresh-btn" class="btn btn-sm btn-outline-success btn-control">
+                                    <i class="fas fa-sync-alt me-1"></i>刷新数据
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script>
+    // 显示当前时间
+    function updateClock() {
+        const now = new Date();
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        document.getElementById('current-time').textContent = now.toLocaleDateString('zh-CN', options);
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // 刷新按钮事件
+    document.getElementById('refresh-btn').addEventListener('click', function() {
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-circle-notch fa-spin me-1"></i>刷新中...';
+
+        initMap().then(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-sync-alt me-1"></i>刷新数据';
+
+            const now = new Date();
+            const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            document.getElementById('last-updated').textContent = now.toLocaleTimeString('zh-CN', options);
+        });
+    });
+
+    // 图例切换按钮
+    document.getElementById('legend-btn').addEventListener('click', function() {
+        toggleLegend();
+    });
+</script>
+{% endblock %}

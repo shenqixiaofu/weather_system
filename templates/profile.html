@@ -1,0 +1,341 @@
+{% extends "layout.html" %}
+
+{% block title %}个人主页 - 气象数据可视化平台{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/profile.css">
+{% endblock %}
+
+{% block content %}
+<div class="container main-content">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+            <li class="breadcrumb-item active" aria-current="page">个人主页</li>
+        </ol>
+    </nav>
+
+    <div class="profile-header">
+        <div class="user-info">
+            <div class="avatar-container">
+                {% if current_user.avatar_file %}
+                <img src="{{ url_for('static', filename='images/avatars/' + current_user.avatar_file) if current_user.avatar_file else url_for('static', filename='images/avatars/default-avatar.png') }}"
+                     alt="用户头像" class="profile-avatar">
+                {% else %}
+                <div class="profile-avatar d-flex align-items-center justify-content-center bg-light">
+                    <i class="fas fa-user fa-3x text-secondary"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="user-details">
+                <h1>
+                    {{ current_user.username }}
+                    <span class="user-badge">
+                        {% if current_user.is_admin %}
+                            fumo管理员
+                        {% else %}
+                            普通用户
+                        {% endif %}
+                    </span>
+                </h1>
+                <p class="user-meta">
+                    <i class="far fa-calendar-alt me-1"></i> 注册于 {{ current_user.register_date.strftime('%Y年%m月%d日')
+                    }}
+                </p>
+                <p class="user-meta">
+                    <i class="far fa-envelope me-1"></i>
+                    {% if current_user.email %}
+                    {{ current_user.email }}
+                    {% else %}
+                    未设置邮箱
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('profile_settings') }}" class="btn btn-primary mt-2">
+                    <i class="fas fa-cog me-1"></i> 编辑资料
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <!-- 数据统计卡片 -->
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <i class="fas fa-chart-bar me-2"></i> 数据统计
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <p class="stat-value">{{ user_stats.views_count|default(0) }}</p>
+                        <p class="stat-label">活动记录</p>
+                    </div>
+                    <div class="stat-item">
+                        <p class="stat-value">{{ user_stats.favorites_count|default(0) }}</p>
+                        <p class="stat-label">收藏位置</p>
+                    </div>
+                    <div class="stat-item">
+                        <p class="stat-value">{{ user_stats.searches_count|default(0) }}</p>
+                        <p class="stat-label">搜索次数</p>
+                    </div>
+                    <div class="stat-item">
+                        <p class="stat-value">{{ user_stats.days_since_joined|default(0) }}</p>
+                        <p class="stat-label">注册天数</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 个性化设置卡片 -->
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <i class="fas fa-sliders-h me-2"></i> 个性化设置
+                </div>
+                <div class="card-body">
+                    <div class="preference-item">
+                        <div class="d-flex align-items-center">
+                            <div class="preference-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <span class="preference-label ms-1">默认城市</span>
+                        </div>
+                        <span class="preference-value">
+                            {% if current_user.default_city %}
+                                {{ current_user.default_city }}
+                            {% else %}
+                                未设置
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="preference-item">
+                        <div class="d-flex align-items-center">
+                            <div class="preference-icon">
+                                <i class="fas fa-moon"></i>
+                            </div>
+                            <span class="preference-label ms-1">夜间模式</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="darkModeToggle"
+                                   {% if current_user.is_authenticated and current_user.theme== 'dark' %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="preference-item">
+                        <div class="d-flex align-items-center">
+                            <div class="preference-icon">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <span class="preference-label ms-1">邮件通知</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="emailNotifyToggle" {% if current_user.email_weather_alerts %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('profile_settings') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-cog me-1"></i> 更多设置
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <!-- 最近活动卡片 -->
+            <div class="stats-card mb-4">
+                <div class="stats-card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-history me-2"></i> 最近活动
+                    </div>
+                    <div class="d-flex gap-2">
+                        <!-- 筛选下拉菜单 -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                    id="activityFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                筛选
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="activityFilterDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('profile') }}">全部活动</a></li>
+                                <li><a class="dropdown-item"
+                                       href="{{ url_for('profile', activity_type='view') }}">仅查询记录</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('profile', activity_type='search') }}">仅搜索记录</a>
+                                </li>
+                                <li><a class="dropdown-item" href="{{ url_for('profile', activity_type='feedback') }}">仅反馈记录</a>
+                                </li>
+                                <li><a class="dropdown-item" href="{{ url_for('profile', activity_type='favorite') }}">仅收藏记录</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- 清空记录下拉菜单 -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-danger dropdown-toggle" type="button"
+                                    id="clearActivitiesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                清空记录
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="clearActivitiesDropdown">
+                                <li>
+                                    <form action="{{ url_for('clear_activities') }}#activities-container" method="post"
+                                          class="clear-activity-form">
+                                        <input type="hidden" name="activity_type" value="all">
+                                        <button type="submit" class="dropdown-item text-danger">清空所有活动</button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('clear_activities') }}" method="post"
+                                          class="clear-activity-form">
+                                        <input type="hidden" name="activity_type" value="view">
+                                        <button type="submit" class="dropdown-item">清空查询记录</button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('clear_activities') }}" method="post"
+                                          class="clear-activity-form">
+                                        <input type="hidden" name="activity_type" value="search">
+                                        <button type="submit" class="dropdown-item">清空搜索记录</button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('clear_activities') }}" method="post"
+                                          class="clear-activity-form">
+                                        <input type="hidden" name="activity_type" value="feedback">
+                                        <button type="submit" class="dropdown-item">清空反馈记录</button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('clear_activities') }}" method="post"
+                                          class="clear-activity-form">
+                                        <input type="hidden" name="activity_type" value="favorite">
+                                        <button type="submit" class="dropdown-item">清空收藏记录</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <a href="{{ url_for('profile') }}?show_all_activities=true"
+                           class="btn btn-sm btn-outline-primary">查看全部</a>
+                    </div>
+                </div>
+
+                {% if user_activities %}
+                <ul class="activity-list" id="activities-container">
+                    {% include 'partials/activity_list.html' %}
+                </ul>
+                <div class="text-center mt-3" id="load-more-container">
+                    {% if has_more_activities %}
+                    <button id="load-more-btn" class="btn btn-sm btn-outline-secondary"
+                            data-page="{{ current_page + 1 }}" data-type="{{ activity_type or '' }}">
+                        加载更多 <i class="fas fa-angle-down ms-1"></i>
+                    </button>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-history"></i>
+                    <p>暂无活动记录</p>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i> 开始浏览
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 收藏的位置卡片 -->
+            <div class="stats-card">
+                <div class="stats-card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-star me-2"></i> 收藏的位置
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                            data-bs-target="#addLocationModal">
+                        <i class="fas fa-plus me-1"></i> 添加收藏
+                    </button>
+                </div>
+
+                {% if favorite_locations %}
+                <div class="locations-grid" id="locations-section">
+                    {% for location in favorite_locations %}
+                    <div class="location-card">
+                        <div class="location-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="location-info">
+                            <h3>{{ location.name }}</h3>
+                            <p>收藏于 {{ location.added_on.strftime('%Y-%m-%d') }}</p>
+                        </div>
+                        <form method="POST"
+                              action="{{ url_for('remove_favorite', city_name=location.name) }}#locations-section"
+                              style="display: inline;">
+                            <button type="submit" class="btn btn-link text-secondary" title="删除收藏">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-star"></i>
+                    <p>还没有收藏的位置</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLocationModal">
+                        <i class="fas fa-plus me-1"></i> 添加收藏
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加位置模态框 -->
+<div class="modal fade" id="addLocationModal" tabindex="-1" aria-labelledby="addLocationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addLocationModalLabel">添加收藏位置</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addLocationForm" method="POST" action="{{ url_for('add_favorite', city_name='') }}">
+                    <div class="mb-3">
+                        <label for="cityName" class="form-label">城市名称</label>
+                        <input type="text" class="form-control" id="cityName" name="cityName" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="submit" form="addLocationForm" class="btn btn-primary">添加</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 添加确认对话框 -->
+<div class="modal fade" id="confirmClearModal" tabindex="-1" aria-labelledby="confirmClearModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmClearModalLabel">确认清空</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要清空这些活动记录吗？此操作无法撤销。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmClearBtn">确认清空</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/profile.js"></script>
+{% endblock %}

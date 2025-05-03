@@ -1,0 +1,600 @@
+{% extends 'admin/base.html' %}
+{% block title %}系统设置 - 天气系统管理后台{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    .settings-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .nav-tabs {
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 2rem;
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        padding: 1rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom: 3px solid #0d6efd;
+        background-color: transparent;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        padding: 1.25rem;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 0.375rem;
+        border: 1px solid #ced4da;
+        padding: 0.75rem 1rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .btn-primary {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-radius: 0.375rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0.5rem 1rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .status-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .status-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #0d6efd;
+    }
+    
+    .system-logo-preview {
+        max-height: 40px;
+        width: auto;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .alert {
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        padding: 1rem;
+    }
+    
+    .table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .system-logs {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        max-height: 300px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <h2 class="mb-4">系统设置</h2>
+    
+    <!-- 标签页 -->
+    <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button"
+                    role="tab" aria-controls="system" aria-selected="true">
+                <i class="fas fa-cog me-2"></i>基本设置
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button"
+                    role="tab" aria-controls="email" aria-selected="false">
+                <i class="fas fa-envelope me-2"></i>邮件设置
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button"
+                    role="tab" aria-controls="backup" aria-selected="false">
+                <i class="fas fa-database me-2"></i>数据备份与恢复
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="status-tab" data-bs-toggle="tab" data-bs-target="#status" type="button"
+                    role="tab" aria-controls="status" aria-selected="false">
+                <i class="fas fa-chart-line me-2"></i>系统状态
+            </button>
+        </li>
+    </ul>
+
+    <!-- 标签页内容 -->
+    <div class="tab-content" id="settingsTabContent">
+        <!-- 基本设置 -->
+        <div class="tab-pane fade show active" id="system" role="tabpanel" aria-labelledby="system-tab">
+            <div class="card">
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ system_form.hidden_tag() }}
+                        <input type="hidden" name="form_type" value="system_settings">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ system_form.system_name.label(class="form-label") }}
+                                {{ system_form.system_name(class="form-control") }}
+                                {% if system_form.system_name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in system_form.system_name.errors %}
+                                    <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="system_version" class="form-label">系统版本</label>
+                                <input type="text" class="form-control" id="system_version"
+                                       value="{{ settings.system_version }}" readonly>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            {{ system_form.system_logo.label(class="form-label") }}
+                            {{ system_form.system_logo(class="form-control") }}
+                            {% if settings.system_logo %}
+                            <div class="mt-3">
+                                <p class="mb-2">当前 Logo:</p>
+                                <img src="{{ url_for('static', filename='images/logos/' + settings.system_logo) }}"
+                                     alt="System Logo" class="system-logo-preview" style="max-height: 40px;">
+                            </div>
+                            {% endif %}
+                        </div>
+                        {{ system_form.submit(class="btn btn-primary") }}
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 邮件设置 -->
+        <div class="tab-pane fade" id="email" role="tabpanel" aria-labelledby="email-tab">
+            <div class="card">
+                <div class="card-body p-4">
+                    <form method="POST">
+                        {{ email_form.hidden_tag() }}
+                        <input type="hidden" name="form_type" value="email_settings">
+                        <div class="mb-3 form-check form-switch">
+                            {{ email_form.enable_email_notifications(class="form-check-input") }}
+                            {{ email_form.enable_email_notifications.label(class="form-check-label") }}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ email_form.smtp_server.label(class="form-label") }}
+                                {{ email_form.smtp_server(class="form-control") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ email_form.smtp_port.label(class="form-label") }}
+                                {{ email_form.smtp_port(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ email_form.sender_email.label(class="form-label") }}
+                                {{ email_form.sender_email(class="form-control") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ email_form.smtp_password.label(class="form-label") }}
+                                {{ email_form.smtp_password(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            {{ email_form.email_encryption.label(class="form-label") }}
+                            {{ email_form.email_encryption(class="form-select") }}
+                        </div>
+                        {{ email_form.submit(class="btn btn-primary") }}
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据备份与恢复 -->
+        <div class="tab-pane fade" id="backup" role="tabpanel" aria-labelledby="backup-tab">
+            <div class="card">
+                <div class="card-body p-4">
+                    <!-- 备份部分 -->
+                    <h5 class="mb-4"><i class="fas fa-save me-2"></i>数据备份</h5>
+                    <form method="POST" action="{{ url_for('backup_database') }}" id="backup-form" class="mb-4">
+                        {{ backup_form.hidden_tag() }}
+                        <input type="hidden" name="form_type" value="backup">
+                        <div class="mb-3">
+                            {% if backup_form.backup_description is defined %}
+                            {{ backup_form.backup_description.label(class="form-label") }}
+                            {{ backup_form.backup_description(class="form-control") }}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary" id="backup-button">
+                                <i class="fas fa-save me-2"></i>创建备份
+                            </button>
+                            <div id="backup-status" class="mt-2"></div>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- 恢复部分 -->
+                    <h5 class="mb-4"><i class="fas fa-undo me-2"></i>数据恢复</h5>
+                    <form method="POST" action="{{ url_for('restore_database', filename='') }}" id="restore-form" class="mb-4">
+                        {{ backup_form.hidden_tag() }}
+                        <input type="hidden" name="confirm_restore" id="confirm_restore" value="false">
+                        <div class="mb-3">
+                            <label for="backup_file" class="form-label">选择备份文件:</label>
+                            <select class="form-select" name="backup_file" id="backup_file">
+                                {% for backup in backups %}
+                                <option value="{{ backup }}">{{ backup }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-danger" id="restore-button">
+                            <i class="fas fa-undo me-2"></i>恢复数据
+                        </button>
+                        <div id="restore-status" class="mt-2"></div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- 自动备份设置 -->
+                    <h5 class="mb-4"><i class="fas fa-clock me-2"></i>自动备份设置</h5>
+                    <form method="post">
+                        <input type="hidden" name="form_type" value="auto_backup">
+                        {{ auto_backup_form.hidden_tag() }}
+                        <div class="mb-3 form-check form-switch">
+                            {{ auto_backup_form.auto_backup_enabled(class="form-check-input") }}
+                            {{ auto_backup_form.auto_backup_enabled.label(class="form-check-label") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ auto_backup_form.auto_backup_interval.label(class="form-label") }}
+                            {{ auto_backup_form.auto_backup_interval(class="form-control") }}
+                        </div>
+                        {{ auto_backup_form.submit(class="btn btn-primary") }}
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 系统状态 -->
+        <div class="tab-pane fade" id="status" role="tabpanel" aria-labelledby="status-tab">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-database me-2"></i>数据库状态</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table">
+                                <tbody>
+                                <tr>
+                                    <td>天气数据记录</td>
+                                    <td class="status-value">{{ status.db_records.weather_data }}</td>
+                                </tr>
+                                <tr>
+                                    <td>预报数据记录</td>
+                                    <td class="status-value">{{ status.db_records.forecasts }}</td>
+                                </tr>
+                                <tr>
+                                    <td>小时预报记录</td>
+                                    <td class="status-value">{{ status.db_records.hourly_forecasts }}</td>
+                                </tr>
+                                <tr>
+                                    <td>区域温度记录</td>
+                                    <td class="status-value">{{ status.db_records.region_temperatures }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>模型状态</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <p class="mb-1">已训练模型数量:</p>
+                                <h4 class="status-value">{{ status.trained_models }}</h4>
+                            </div>
+                            <div class="mb-3">
+                                <p class="mb-1">模型存储路径:</p>
+                                <code class="bg-light p-2 rounded d-block">{{ predictor.model_path }}</code>
+                            </div>
+                            <div class="mt-4">
+                                <h6 class="mb-3">系统操作</h6>
+                                <div class="d-flex gap-3">
+                                    <a href="{{ url_for('admin_clear_cache') }}" class="btn btn-warning btn-sm flex-grow-1"
+                                       onclick="return confirm('确定要清除缓存数据吗？')">
+                                        <i class="fas fa-trash me-1"></i>清除缓存
+                                    </a>
+                                    <a href="{{ url_for('admin_update_provinces') }}" class="btn btn-info btn-sm flex-grow-1">
+                                        <i class="fas fa-sync me-1"></i>更新省份数据
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-list me-2"></i>系统日志</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="system-logs">
+                                <pre>{{ system_logs }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 确保在DOM加载完成后执行
+    window.addEventListener('load', function() {
+        console.log('页面完全加载完成，开始初始化...');
+        
+        // 从 URL 中获取当前标签页
+        const urlHash = window.location.hash;
+        if (urlHash) {
+            // 激活对应的标签页
+            const tab = new bootstrap.Tab(document.querySelector(`button[data-bs-target="${urlHash}"]`));
+            tab.show();
+        }
+
+        // 标签页切换时更新 URL
+        const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabEls.forEach(tabEl => {
+            tabEl.addEventListener('shown.bs.tab', function (event) {
+                const targetId = event.target.getAttribute('data-bs-target');
+                window.location.hash = targetId;
+            });
+        });
+
+        // 获取所有flash消息，排除class为persistent-alert的元素
+        var flashMessages = document.querySelectorAll('.alert:not(.persistent-alert)');
+
+        // 为每个flash消息设置自动关闭定时器
+        flashMessages.forEach(function (message) {
+            setTimeout(function () {
+                var bsAlert = new bootstrap.Alert(message);
+                bsAlert.close();
+            }, 5000);
+        });
+
+        // 数据恢复功能
+        const restoreButton = document.getElementById('restore-button');
+        if (!restoreButton) {
+            console.error('恢复按钮元素未找到！');
+            return;
+        }
+        console.log('找到恢复按钮，添加点击事件监听器...');
+        
+        restoreButton.addEventListener('click', function() {
+            console.log('恢复按钮被点击');
+            const backupFile = document.getElementById('backup_file').value;
+            console.log('选择的备份文件:', backupFile);
+            
+            if (!backupFile) {
+                alert('请先选择要恢复的备份文件');
+                return;
+            }
+            
+            if (confirm('确定要恢复数据吗？这将覆盖当前的数据库！')) {
+                console.log('用户确认恢复操作');
+                document.getElementById('confirm_restore').value = 'true';
+                const form = document.getElementById('restore-form');
+                const restoreUrl = "{{ url_for('restore_database', filename='') }}".replace('/admin/restore_database/', '/admin/restore_database/' + backupFile);
+                console.log('恢复URL:', restoreUrl);
+                form.action = restoreUrl;
+                
+                const statusDiv = document.getElementById('restore-status');
+                restoreButton.disabled = true;
+                restoreButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>恢复中...';
+                statusDiv.innerHTML = '<div class="alert alert-info">正在恢复数据库，请稍候...</div>';
+
+                // 创建 FormData 对象
+                const formData = new FormData(form);
+                console.log('FormData:', Object.fromEntries(formData));
+                
+                // 发送请求
+                fetch(restoreUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name="csrf_token"]').value,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams(formData)
+                })
+                .then(response => {
+                    console.log('收到响应:', response);
+                    if (!response.ok) {
+                        return response.json().then(errData => {
+                            console.error('服务器返回错误:', errData);
+                            throw new Error(errData.message || `HTTP错误! 状态码: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('处理响应数据:', data);
+                    restoreButton.disabled = false;
+                    restoreButton.innerHTML = '<i class="fas fa-undo me-2"></i>恢复数据';
+                    
+                    // 显示更详细的错误信息
+                    let message = data.message;
+                    if (data.type === 'error' && data.details) {
+                        message += '<br><small class="text-muted">' + data.details + '</small>';
+                    }
+                    
+                    statusDiv.innerHTML = `<div class="alert alert-${data.type}">${message}</div>`;
+                    
+                    if (data.type === 'success') {
+                        setTimeout(() => location.reload(), 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('恢复过程中发生错误:', error);
+                    restoreButton.disabled = false;
+                    restoreButton.innerHTML = '<i class="fas fa-undo me-2"></i>恢复数据';
+                    statusDiv.innerHTML = `<div class="alert alert-danger">
+                        <strong>恢复失败:</strong> ${error.message}
+                        <br><small class="text-muted">请检查服务器日志以获取更多信息</small>
+                    </div>`;
+                });
+            }
+        });
+        
+        // 数据备份功能
+        document.getElementById('backup-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var form = this;
+            var backupButton = document.getElementById('backup-button');
+            var statusDiv = document.getElementById('backup-status');
+            var backupDescription = document.getElementById('backup_description').value;
+            
+            // 禁用备份按钮并显示加载状态
+            backupButton.disabled = true;
+            backupButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>备份中...';
+            statusDiv.innerHTML = '<div class="alert alert-info">正在创建备份，请稍候...</div>';
+
+            // 创建 FormData 对象
+            var formData = new FormData(form);
+            
+            // 将 FormData 转换为 URLSearchParams
+            var searchParams = new URLSearchParams();
+            for (var pair of formData.entries()) {
+                searchParams.append(pair[0], pair[1]);
+            }
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': formData.get('csrf_token')
+                },
+                body: searchParams.toString()
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 恢复按钮状态
+                backupButton.disabled = false;
+                backupButton.innerHTML = '<i class="fas fa-save me-2"></i>创建备份';
+                
+                // 显示结果消息
+                statusDiv.innerHTML = `<div class="alert alert-${data.type}">${data.message}</div>`;
+                
+                // 如果备份成功，更新备份文件列表
+                if (data.type === 'success') {
+                    // 重新加载备份文件列表
+                    fetch('{{ url_for("admin_list_backups") }}')
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(backups => {
+                            var backupSelect = document.getElementById('backup_file');
+                            backupSelect.innerHTML = '';
+                            if (Array.isArray(backups)) {
+                                backups.forEach(backup => {
+                                    var option = document.createElement('option');
+                                    option.value = backup;
+                                    // 显示备份描述（如果有）
+                                    var description = backup.split('_')[1] || '';
+                                    option.textContent = backup + (description ? ` - ${description}` : '');
+                                    backupSelect.appendChild(option);
+                                });
+                            } else {
+                                console.error('Invalid backup list format:', backups);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading backup list:', error);
+                            statusDiv.innerHTML += '<div class="alert alert-warning mt-2">更新备份列表失败</div>';
+                        });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                backupButton.disabled = false;
+                backupButton.innerHTML = '<i class="fas fa-save me-2"></i>创建备份';
+                statusDiv.innerHTML = '<div class="alert alert-danger">备份过程中发生错误: ' + error.message + '</div>';
+            });
+        });
+        
+        console.log('初始化完成');
+    });
+</script>
+{% endblock %}

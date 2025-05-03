@@ -1,0 +1,89 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}用户管理 - 天气系统管理后台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2>用户管理</h2>
+        <a href="{{ url_for('admin_create_user') }}" class="btn btn-success btn-sm">添加用户</a>
+    </div>
+    <hr>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <table class="table">
+            <thead>
+            <tr>
+                <th class="text-center">ID</th>
+                <th class="text-center">用户名</th>
+                <th class="text-center">邮箱</th>
+                <th class="text-center">电话</th>
+                <th class="text-center">简介</th>
+                <th class="text-center">位置</th>
+                <th class="text-center">职业</th>
+                <th class="text-center">头像</th>
+                <th class="text-center">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for user in users %}
+            <tr>
+                <td class="text-center">{{ user.id }}</td>
+                <td class="text-center">{{ user.username }}</td>
+                <td class="text-center">{{ user.email }}</td>
+                <td class="text-center">{{ user.phone }}</td>
+                <td class="text-center">{{ user.bio }}</td>
+                <td class="text-center">{{ user.location }}</td>
+                <td class="text-center">{{ user.occupation }}</td>
+                <td class="text-center">
+                    {% if user.avatar_file %}
+                    <img src="{{ url_for('static', filename='images/avatars/' + user.avatar_file) if user.avatar_file else url_for('static', filename='images/avatars/default-avatar.png') }}"
+                         alt="头像" width="50" height="50" class="profile-avatar">
+                    {% else %}
+                    <div class="profile-avatar d-flex align-items-center justify-content-center bg-light"
+                         style="width: 50px; height: 50px;">
+                        <i class="fas fa-user fa-3x text-secondary"></i>
+                    </div>
+                    {% endif %}
+                </td>
+
+                <td class="text-center">
+                    <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> 编辑
+                    </a>
+                    <form action="{{ url_for('admin_delete_user', user_id=user.id) }}" method="post"
+                          style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-danger"
+                                onclick="return confirm('确定要删除此用户吗？');">
+                            <i class="fas fa-trash-alt"></i> 删除
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // 获取所有flash消息
+        var flashMessages = document.querySelectorAll('.alert');
+
+        // 为每个flash消息设置自动关闭定时器
+        flashMessages.forEach(function (message) {
+            // 5秒后开始关闭动画
+            setTimeout(function () {
+                // 创建Bootstrap alert对象并关闭
+                var bsAlert = new bootstrap.Alert(message);
+                bsAlert.close();
+            }, 5000);
+        });
+    });
+</script>
+
+{% endblock %}

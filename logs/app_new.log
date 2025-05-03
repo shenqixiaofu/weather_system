@@ -1,0 +1,80 @@
+2025-04-29 23:03:10,072 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:03:13,468 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:04:17,783 ERROR: 预测失败: name 'X_test' is not defined [in D:\1workspace\PythonSave\weather-vis-system\app.py:1672]
+Traceback (most recent call last):
+  File "D:\1workspace\PythonSave\weather-vis-system\app.py", line 1651, in predict_weather
+    _, accuracy = predictor.evaluate_model(X_test, y_test)
+                                           ^^^^^^
+NameError: name 'X_test' is not defined
+2025-04-29 23:06:32,119 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:06:50,164 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:07:36,715 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:07:40,155 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:07:51,889 ERROR: 预测失败: cannot access local variable 'results' where it is not associated with a value [in D:\1workspace\PythonSave\weather-vis-system\app.py:1674]
+Traceback (most recent call last):
+  File "D:\1workspace\PythonSave\weather-vis-system\app.py", line 1648, in predict_weather
+    predictions = predictor.run_full_pipeline(city, retrain=False)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\1workspace\PythonSave\weather-vis-system\utils\weather_predictor.py", line 346, in run_full_pipeline
+    metrics = self.evaluate_model(self.last_X_test, self.last_y_test)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\1workspace\PythonSave\weather-vis-system\utils\weather_predictor.py", line 182, in evaluate_model
+    avg_r2 = np.mean([results[col]['R2'] for col in self.target_cols])
+                      ^^^^^^^
+UnboundLocalError: cannot access local variable 'results' where it is not associated with a value
+2025-04-29 23:08:03,818 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:08:19,378 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:08:43,618 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:09:50,837 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:09:53,881 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:10:12,617 ERROR: 预测失败: name 'accuracy' is not defined [in D:\1workspace\PythonSave\weather-vis-system\app.py:1671]
+Traceback (most recent call last):
+  File "D:\1workspace\PythonSave\weather-vis-system\app.py", line 1669, in predict_weather
+    return jsonify({'status': 'success', 'predictions': formatted_results, 'accuracy': accuracy})
+                                                                                       ^^^^^^^^
+NameError: name 'accuracy' is not defined
+2025-04-29 23:10:31,796 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:10:38,939 ERROR: 预测失败: name 'accuracy' is not defined [in D:\1workspace\PythonSave\weather-vis-system\app.py:1671]
+Traceback (most recent call last):
+  File "D:\1workspace\PythonSave\weather-vis-system\app.py", line 1669, in predict_weather
+    return jsonify({'status': 'success', 'predictions': formatted_results, 'accuracy': accuracy})
+                                                                                       ^^^^^^^^
+NameError: name 'accuracy' is not defined
+2025-04-29 23:13:08,620 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:13:17,544 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:13:20,931 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:13:28,979 ERROR: 预测失败: name 'accuracy' is not defined [in D:\1workspace\PythonSave\weather-vis-system\app.py:1671]
+Traceback (most recent call last):
+  File "D:\1workspace\PythonSave\weather-vis-system\app.py", line 1669, in predict_weather
+    return jsonify({'status': 'success', 'predictions': formatted_results, 'accuracy': accuracy})
+                                                                                       ^^^^^^^^
+NameError: name 'accuracy' is not defined
+2025-04-29 23:13:49,740 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:14:34,094 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:26:49,509 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:28:04,434 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:28:07,723 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-29 23:30:11,606 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-30 18:23:08,435 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-30 18:23:11,636 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-30 18:26:06,414 INFO: 正在验证城市: 南宁 [in D:\1workspace\PythonSave\weather-vis-system\app.py:1302]
+2025-04-30 18:26:06,428 INFO: 可用城市列表: ['北京', '上海', '天津', '重庆', '哈尔滨', '齐齐哈尔', '牡丹江', '佳木斯', '绥化', '黑河', '大兴安岭', '伊春', '大庆', '七台河', '鸡西', '鹤岗', '双鸭山', '长春', '吉林', '延边', '四平', '通化', '白城', '辽源', '松原', '白山', '沈阳', '大连', '鞍山', '抚顺', '本溪', '丹东', '锦州', '营口', '阜新', '辽阳', '铁岭', '朝阳', '盘锦', '葫芦岛', '呼和浩特', '包头', '乌海', '乌兰察布', '通辽', '赤峰', '鄂尔多斯', '巴彦淖尔', '锡林郭勒', '呼伦贝尔', '兴安盟', '阿拉善盟', '石家庄', '保定', '张家口', '承德', '唐山', '廊坊', '沧州', '衡水', '邢台', '邯郸', '秦皇岛', '雄安新区', '太原', '大同', '阳泉', '晋中', '长治', '晋城', '临汾', '运城', '朔州', '忻州', '吕梁', '西安', '咸阳', '延安', '榆林', '渭南', '商洛', '安康', '汉中', '宝鸡', '铜川', '杨凌', '济南', '青岛', '淄博', '德州', '烟台', '潍坊', '济宁', '泰安', '临沂', '菏泽', '滨州', '东营', '威海', '枣庄', '日照', '莱芜', '聊城', '乌鲁木齐', '克拉玛依', '石河子', '昌吉', '吐鲁番', '巴音郭楞', '阿拉尔', '阿克苏', '喀什', '伊犁', '塔城', '哈密', '和田', '阿勒泰', '克州', '博尔塔拉', '图木舒克', '五家渠', '铁门关', '北屯', '双河', '可克达拉', '拉萨', '日喀则', '山南', '林芝', '昌都', '那曲', '阿里', '西宁', '海东', '黄南', '海南', '果洛', '玉树', '海西', '海北', '兰州', '定西', '平凉', '庆阳', '武威', '金昌', '张掖', '酒泉', '天水', '陇南', '临夏', '甘南', '白银', '嘉峪关', '银川', '石嘴山', '吴忠', '固原', '中卫', '郑州', '安阳', '新乡', '许昌', '平顶山', '信阳', '南阳', '开封', '洛阳', '商丘', '焦作', '鹤壁', '濮阳', '周口', '漯河', '驻马店', '三门峡', '济源', '南京', '无锡', '镇江', '苏州', '南通', '扬州', '盐城', '徐州', '淮安', '连云港', '常州', '泰州', '宿迁', '武汉', '襄阳', '鄂州', '孝感', '黄冈', '黄石', '咸宁', '荆州', '宜昌', '恩施', '十堰', '神农架', '随州', '荆门', '天门', '仙桃', '潜江', '杭州', '湖州', '嘉兴', '宁波', '绍兴', '台州', '温州', '丽水', '金华', '衢州', '舟山', '合肥', '蚌埠', '芜湖', '淮南', '马鞍山', '安庆', '宿州', '阜阳', '亳州', '黄山', '滁州', '淮北', '铜陵', '宣城', '六安', '池州', '福州', '厦门', '宁德', '莆田', '泉州', '漳州', '龙岩', '三明', '南平', '钓鱼岛', '南昌', '九江', '上饶', '抚州', '宜春', '吉安', '赣州', '景德镇', '萍乡', '新余', '鹰潭', '长沙', '湘潭', '株洲', '衡阳', '郴州', '常德', '益阳', '娄底', '邵阳', '岳阳', '张家界', '怀化', '永州', '湘西', '贵阳', '遵义', '安顺', '黔南', '黔东南', '铜仁', '毕节', '六盘水', '黔西南', '成都', '攀枝花', '自贡', '绵阳', '南充', '达州', '遂宁', '广安', '巴中', '泸州', '宜宾', '内江', '资阳', '乐山', '眉山', '凉山', '雅安', '甘孜', '阿坝', '德阳', '广元', '广州', '韶关', '惠州', '梅州', '汕头', '深圳', '珠海', '佛山', '肇庆', '湛江', '江门', '河源', '清远', '云浮', '潮州', '东莞', '中山', '阳江', '揭阳', '茂名', '汕尾', '昆明', '大理', '红河', '曲靖', '保山', '文山', '玉溪', '楚雄', '普洱', '昭通', '临沧', '怒江', '迪庆', '丽江', '德宏', '西双版纳', '南宁', '崇左', '柳州', '来宾', '桂林', '梧州', '贺州', '贵港', '玉林', '百色', '钦州', '河池', '北海', '防城港', '海口', '三亚', '三沙', '香港', '澳门', '台北', '高雄', '台中'] [in D:\1workspace\PythonSave\weather-vis-system\app.py:1317]
+2025-04-30 18:26:09,675 INFO: 管理员访问用户列表 [in D:\1workspace\PythonSave\weather-vis-system\app.py:2168]
+2025-04-30 18:28:50,933 ERROR: 预测失败: name 'X_train' is not defined [in D:\1workspace\PythonSave\weather-vis-system\app.py:1665]
+Traceback (most recent call last):
+  File "D:\1workspace\PythonSave\weather-vis-system\app.py", line 1643, in predict_weather
+    predictions = predictor.run_full_pipeline(city, retrain=False)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\1workspace\PythonSave\weather-vis-system\utils\weather_predictor.py", line 312, in run_full_pipeline
+    self.evaluate_model(X_test, y_test)
+  File "D:\1workspace\PythonSave\weather-vis-system\utils\weather_predictor.py", line 182, in evaluate_model
+    X_train_scaled = self.preprocessor.fit_transform(X_train)  # 使用训练集数据
+                                                     ^^^^^^^
+NameError: name 'X_train' is not defined
+2025-04-30 18:37:29,863 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-30 18:41:32,124 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-30 18:41:48,955 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-30 18:41:52,176 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-30 18:44:34,870 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-30 19:06:37,583 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]
+2025-04-30 19:06:40,878 INFO: 天气系统启动 [in D:\1workspace\PythonSave\weather-vis-system\app.py:74]

@@ -1,0 +1,290 @@
+{% extends "admin/base.html" %}
+
+{% block title %}城市管理 - 天气系统管理后台{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 初始化所有工具提示
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // 显示加载提示
+    function showLoading() {
+        $('#loadingIndicator').show();
+        $('#citiesTable tbody').hide();
+    }
+
+    // 隐藏加载提示
+    function hideLoading() {
+        $('#loadingIndicator').hide();
+        $('#citiesTable tbody').show();
+    }
+
+    // 显示错误消息
+    function showError(message) {
+        const alertHtml = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        $('#errorContainer').html(alertHtml);
+    }
+
+    // 加载城市数据
+    function loadCities(page = 1) {
+        showLoading();
+        const search = $('#searchInput').val();
+        return $.ajax({
+            url: '/admin/api/cities',
+            method: 'GET',
+            data: { page: page, search: search },
+            success: function(data) {
+                const tbody = $('#citiesTable tbody');
+                tbody.empty();
+                
+                if (data.cities && data.cities.length > 0) {
+                    data.cities.forEach(function(city) {
+                        const row = `
+                            <tr>
+                                <td class="text-center">${city.name}</td>
+                                <td class="text-center">${city.record_count}</td>
+                                <td class="text-center">${city.earliest_date}</td>
+                                <td class="text-center">${city.latest_date}</td>
+                                <td class="text-center">
+                                    <a href="/admin/crawl-weather/${city.name}" class="btn btn-sm btn-info me-2" 
+                                       data-bs-toggle="tooltip" data-bs-placement="top" title="爬取数据">
+                                        <i class="fas fa-cloud-download-alt"></i> 爬取
+                                    </a>
+                                    <a href="/admin/weather-data?city=${encodeURIComponent(city.name)}" class="btn btn-sm btn-primary" 
+                                       data-bs-toggle="tooltip" data-bs-placement="top" title="查看天气数据">
+                                        <i class="fas fa-table"></i> 查看
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.append(row);
+                    });
+
+                    // 更新分页
+                    updatePagination(data.current_page, data.total_pages);
+                } else {
+                    tbody.html('<tr><td colspan="5" class="text-center">没有找到城市数据</td></tr>');
+                }
+                hideLoading();
+            },
+            error: function(xhr, status, error) {
+                hideLoading();
+                if (xhr.status === 401) {
+                    showError('您没有权限访问此页面，请确保已登录管理员账号');
+                } else {
+                    showError('加载数据失败，请稍后重试');
+                }
+                console.error('Error loading cities:', error);
+            }
+        });
+    }
+
+    // 更新分页
+    function updatePagination(currentPage, totalPages) {
+        const pagination = $('#pagination');
+        pagination.empty();
+    
+        if (totalPages <= 1) {
+            return;
+        }
+    
+        // 上一页按钮
+        pagination.append(`
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage - 1}" ${currentPage === 1 ? 'tabindex="-1" aria-disabled="true"' : ''}>上一页</a>
+            </li>
+        `);
+    
+        // 第一页
+        if (currentPage > 3) {
+            pagination.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="1">1</a>
+                </li>
+            `);
+            // 省略号
+            if (currentPage > 4) {
+                pagination.append(`
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                `);
+            }
+        }
+    
+        // 中间页码
+        const startPage = Math.max(1, currentPage - 2);  // 保持向前显示2页不变
+        const endPage = Math.min(totalPages, currentPage + 4);  // 修改为向后显示4页
+        
+        for (let i = startPage; i <= endPage; i++) {
+            pagination.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+    
+        // 省略号
+        if (endPage < totalPages - 1) {
+            pagination.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            `);
+        }
+    
+        // 最后一页
+        if (endPage < totalPages) {
+            pagination.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>
+                </li>
+            `);
+        }
+    
+        // 下一页按钮
+        pagination.append(`
+            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'tabindex="-1" aria-disabled="true"' : ''}>下一页</a>
+            </li>
+        `);
+    }
+
+    // 搜索功能
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            loadCities(1);
+        }, 300); // 300ms 防抖
+    });
+
+    // 分页点击事件
+    $('#pagination').on('click', '.page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (!$(this).parent().hasClass('disabled')) {
+            loadCities(page);
+        }
+    });
+
+    // 添加刷新按钮点击事件
+    $('#refreshButton').on('click', function() {
+        $(this).find('i').addClass('fa-spin');
+        loadCities(1).then(() => {
+            $(this).find('i').removeClass('fa-spin');
+        });
+    });
+
+    // 初始加载
+    loadCities();
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">城市管理</h1>
+    <div>
+        <a href="{{ url_for('crawl_all_cities') }}" class="d-none d-sm-inline-block btn btn-sm btn-info shadow-sm me-2">
+            <i class="fas fa-cloud-download-alt fa-sm text-white-50"></i> 爬取所有城市
+        </a>
+        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addCityModal">
+            <i class="fas fa-plus fa-sm text-white-50"></i> 添加城市
+        </a>
+    </div>
+</div>
+<hr>
+
+<!-- Error Container -->
+<div id="errorContainer"></div>
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">城市列表</h6>
+                <div class="d-flex align-items-center">
+                    <button id="refreshButton" class="btn btn-sm btn-outline-primary me-2">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                    <div class="input-group" style="width: 300px;">
+                        <input type="text" id="searchInput" class="form-control" placeholder="搜索城市...">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="citiesTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th class="text-center" width="22%">城市名称</th>
+                                <th class="text-center" width="18%">数据记录数</th>
+                                <th class="text-center" width="20%">最早数据日期</th>
+                                <th class="text-center" width="20%">最新数据日期</th>
+                                <th class="text-center" width="20%">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 数据将通过 JavaScript 动态加载 -->
+                        </tbody>
+                    </table>
+                    <!-- 加载提示 -->
+                    <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2 text-muted">正在加载数据，请稍候...</p>
+                    </div>
+                </div>
+                <!-- 分页 -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- 分页将通过 JavaScript 动态加载 -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加城市模态框 -->
+<div class="modal fade" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCityModalLabel">添加城市</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('admin_add_city') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="city_name" class="form-label">城市名称</label>
+                        <input type="text" class="form-control" id="city_name" name="city_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="city_code" class="form-label">城市代码（可选）</label>
+                        <input type="text" class="form-control" id="city_code" name="city_code">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

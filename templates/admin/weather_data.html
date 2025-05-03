@@ -1,0 +1,327 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}天气数据管理 - 天气系统管理后台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>天气数据管理</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-lg-8 mb-3 mb-lg-0">
+                <form class="row g-3" method="get">
+                    <div class="col-sm-6 col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-city"></i></span>
+                            <input type="text" class="form-control" name="city" placeholder="城市名称"
+                                   value="{{ request.args.get('city', '') }}">
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                            <input type="date" class="form-control" name="start_date" placeholder="开始日期"
+                                   value="{{ request.args.get('start_date', '') }}">
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                            <input type="date" class="form-control" name="end_date" placeholder="结束日期"
+                                   value="{{ request.args.get('end_date', '') }}">
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-2">
+                        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> 筛选</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-lg-4 d-flex justify-content-lg-end align-items-center mt-3 mt-lg-0">
+                <a href="{{ url_for('admin_weather_data') }}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-undo"></i> 重置
+                </a>
+                <button type="button" class="btn btn-success me-2" data-bs-toggle="modal"
+                        data-bs-target="#addDataModal">
+                    <i class="fas fa-plus"></i> 添加数据
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmBatchDelete()">
+                    <i class="fas fa-trash-alt"></i> 批量删除
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAll"></th>
+                    <th class="text-center">ID</th>
+                    <th class="text-center">城市</th>
+                    <th class="text-center">日期</th>
+                    <th class="text-center">最高温度</th>
+                    <th class="text-center">最低温度</th>
+                    <th class="text-center">天气状况</th>
+                    <th class="text-center">风向</th>
+                    <th class="text-center">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in weather_data %}
+                <tr>
+                    <td><input type="checkbox" class="dataCheckbox" value="{{ item.id }}"></td>
+                    <td class="text-center">{{ item.id }}</td>
+                    <td class="text-center">{{ item.city_name }}</td>
+                    <td class="text-center">{{ item.date.strftime('%Y-%m-%d') if item.date else 'N/A' }}</td>
+                    <td class="text-center">{{ item.temp_max }}°C</td>
+                    <td class="text-center">{{ item.temp_min }}°C</td>
+                    <td class="text-center">{{ item.weather }}</td>
+                    <td class="text-center">{{ item.wind_dir }}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-primary" data-toggle="modal"
+                                data-target="#editDataModal{{ item.id }}">
+                            编辑
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger"
+                                onclick="confirmDelete('{{ item.id }}')">
+                            删除
+                        </button>
+                    </td>
+                </tr>
+
+                <!-- 编辑数据模态框 -->
+                <div class="modal fade" id="editDataModal{{ item.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">编辑天气数据</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <form action="{{ url_for('admin_edit_weather_data', id=item.id) }}" method="post">
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label>城市</label>
+                                        <input type="text" class="form-control" name="city_name"
+                                               value="{{ item.city_name }}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>日期</label>
+                                        <input type="date" class="form-control" name="date"
+                                               value="{{ item.date.strftime('%Y-%m-%d') if item.date else '' }}"
+                                               required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>最高温度 (°C)</label>
+                                        <input type="number" step="0.1" class="form-control" name="temp_max"
+                                               value="{{ item.temp_max }}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>最低温度 (°C)</label>
+                                        <input type="number" step="0.1" class="form-control" name="temp_min"
+                                               value="{{ item.temp_min }}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>天气状况</label>
+                                        <input type="text" class="form-control" name="weather"
+                                               value="{{ item.weather }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>风向</label>
+                                        <input type="text" class="form-control" name="wind_dir"
+                                               value="{{ item.wind_dir }}">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">保存</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分页控件 -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <!-- 上一页 -->
+                <li class="page-item {{ 'disabled' if page <= 1 else '' }}">
+                    <a class="page-link"
+                       href="{{ url_for('admin_weather_data', page=page-1, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">上一页</a>
+                </li>
+
+                <!-- 第一页 -->
+                {% if page > 3 %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{{ url_for('admin_weather_data', page=1, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">1</a>
+                </li>
+                <!-- 省略号 -->
+                {% if page > 4 %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                {% endif %}
+                {% endif %}
+
+                <!-- 计算起始页和结束页 -->
+                {% set start_page = page - 2 if page - 2 > 0 else 1 %}
+                {% set end_page = page + 4 if page + 4 < total_pages else total_pages %}  {# 修改为向后显示4页 #}
+
+                <!-- 当前页前后的页码 -->
+                {% for i in range(start_page, end_page + 1) %}
+                <li class="page-item {{ 'active' if i == page else '' }}">
+                    <a class="page-link"
+                       href="{{ url_for('admin_weather_data', page=i, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">{{
+                        i }}</a>
+                </li>
+                {% endfor %}
+
+                <!-- 省略号 -->
+                {% if page < total_pages - 3 %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                {% endif %}
+
+                <!-- 最后一页 -->
+                {% if page < total_pages - 2 %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{{ url_for('admin_weather_data', page=total_pages, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">{{
+                        total_pages }}</a>
+                </li>
+                {% endif %}
+
+                <!-- 下一页 -->
+                <li class="page-item {{ 'disabled' if page >= total_pages else '' }}">
+                    <a class="page-link"
+                       href="{{ url_for('admin_weather_data', page=page+1, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">下一页</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- 添加数据模态框 -->
+<div class="modal fade" id="addDataModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">添加天气数据</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{{ url_for('admin_add_weather_data') }}" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>城市</label>
+                        <input type="text" class="form-control" name="city_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>日期</label>
+                        <input type="date" class="form-control" name="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>最高温度 (°C)</label>
+                        <input type="number" step="0.1" class="form-control" name="temp_max" required>
+                    </div>
+                    <div class="form-group">
+                        <label>最低温度 (°C)</label>
+                        <input type="number" step="0.1" class="form-control" name="temp_min" required>
+                    </div>
+                    <div class="form-group">
+                        <label>天气状况</label>
+                        <input type="text" class="form-control" name="weather">
+                    </div>
+                    <div class="form-group">
+                        <label>风向</label>
+                        <input type="text" class="form-control" name="wind_dir">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    function confirmDelete(id) {
+        if (confirm('确定要删除这条天气数据吗？此操作不可恢复。')) {
+            window.location.href = "{{ url_for('admin_delete_weather_data', id=0) }}".replace('0', id);
+        }
+    }
+
+    // 全选/反选
+    $('#selectAll').click(function () {
+        $('.dataCheckbox').prop('checked', this.checked);
+    });
+
+    function confirmBatchDelete() {
+        if (confirm('确定要批量删除选中的天气数据吗？此操作不可恢复。')) {
+            var selectedIds = [];
+            $('.dataCheckbox:checked').each(function () {
+                selectedIds.push($(this).val());
+            });
+            if (selectedIds.length > 0) {
+                console.log("Selected IDs:", selectedIds);
+
+                // 使用 fetch 发送异步请求
+                fetch("{{ url_for('admin_batch_delete_weather_data') }}?ids=" + selectedIds.join(','))
+                    .then(response => response.json()) // 解析 JSON 响应
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message); // 显示成功消息
+                            window.location.reload(); // 刷新页面
+                        } else {
+                            alert(data.message); // 显示失败消息
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                        alert("请求失败，请检查网络"); // 显示错误消息
+                    });
+            } else {
+                alert('请选择要删除的数据。');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // 获取所有flash消息
+        var flashMessages = document.querySelectorAll('.alert');
+
+        // 为每个flash消息设置自动关闭定时器
+        flashMessages.forEach(function (message) {
+            // 3秒后开始关闭动画
+            setTimeout(function () {
+                // 创建Bootstrap alert对象并关闭
+                var bsAlert = new bootstrap.Alert(message);
+                bsAlert.close();
+            }, 3000);
+        });
+    });
+
+</script>
+{% endblock %}
+
+{% endblock %}

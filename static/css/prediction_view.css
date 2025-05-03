@@ -1,0 +1,29 @@
+/* --- 全局样式 --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.main-content {
+    padding: 20px;
+}
+
+/* --- 标题 --- */
+.dashboard-title {
+    font-weight: 600;
+    text-align: center;
+    margin-top: 50px;
+    /*border-bottom: 1px solid rgba(0, 0, 0, 0.1);  移除下边框 */
+}
+
+/* --- 指标数值 --- */
+.metric-value {
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+/* --- 图表容器 --- */
+.chart-container {
+    height: 400px; /* 或根据需要调整 */
+}

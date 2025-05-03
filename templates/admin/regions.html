@@ -1,0 +1,55 @@
+{% extends "admin/base.html" %}
+
+{% block title %}区域管理 - 天气系统管理后台{% endblock %}
+
+{% block content %}
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">区域管理</h1>
+    <a href="{{ url_for('admin_add_region') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+        <i class="fas fa-plus fa-sm text-white-50"></i> 添加区域
+    </a>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">区域列表</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>区域名称</th>
+                                <th>城市数量</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for region in regions %}
+                            <tr>
+                                <td>{{ region.id }}</td>
+                                <td>{{ region.name }}</td>
+                                <td>{{ region.cities|length }}</td>
+                                <td>
+                                    <a href="{{ url_for('admin_edit_region', id=region.id) }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-edit"></i> 编辑
+                                    </a>
+                                    <a href="{{ url_for('admin_delete_region', id=region.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除这个区域吗？')">
+                                        <i class="fas fa-trash"></i> 删除
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

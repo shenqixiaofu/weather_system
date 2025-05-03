@@ -1,0 +1,375 @@
+/* admin.css - 天气数据管理系统管理界面样式 */
+
+/* 全局样式 */
+body {
+    font-family: 'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+}
+
+/* 内容容器 */
+.container {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* 导航栏样式 */
+/* 修改顶部导航栏 */
+.navbar-dark {
+    background: linear-gradient(155deg, 
+        #a8c8ff 0%,
+        #5b86e5 80%
+    ) !important;
+    box-shadow: 0 2px 15px rgba(91,134,229,0.3);
+}
+
+/* 优化侧边栏渐变 */
+.sidebar {
+    background: linear-gradient(165deg, 
+        rgba(168,200,255,0.95) 0%,
+        rgba(91,134,229,0.95) 100%
+    ) !important;
+}
+
+/* 系统标题样式优化 */
+.sidebar-brand-text {
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    font-size: 1.1rem;
+}
+
+/* 激活状态高亮 */
+.nav-link.active {
+    background: rgba(255,255,255,0.15) !important;
+    border-left: 4px solid #ffd700; /* 添加金色高亮边 */
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.nav-link {
+    font-weight: 500;
+}
+
+.nav-link.active {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+/* 卡片样式 */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+    padding: 15px 20px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* 表格样式 */
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    border-top: none;
+    border-bottom: 2px solid #dee2e6;
+    background-color: #f8f9fa;
+    color: #495057;
+    font-size: 0.9rem;
+    padding: 12px;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 12px;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 4px;
+    padding: 6px 15px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 0.85rem;
+}
+
+.btn-primary {
+    background-color: #1e40af;
+    border-color: #1e40af;
+}
+
+.btn-primary:hover {
+    background-color: #1e3a8a;
+    border-color: #1e3a8a;
+}
+
+.btn-success {
+    background-color: #059669;
+    border-color: #059669;
+}
+
+.btn-success:hover {
+    background-color: #047857;
+    border-color: #047857;
+}
+
+.btn-danger {
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+.btn-danger:hover {
+    background-color: #b91c1c;
+    border-color: #b91c1c;
+}
+
+.btn-info {
+    background-color: #0284c7;
+    border-color: #0284c7;
+}
+
+.btn-info:hover {
+    background-color: #0369a1;
+    border-color: #0369a1;
+}
+
+/* 表单样式 */
+.form-control {
+    border-radius: 4px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+}
+
+.form-control:focus {
+    border-color: #1e40af;
+    box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.25);
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #4b5563;
+}
+
+/* 模态框样式 */
+.modal-content {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding: 15px 20px;
+}
+
+.modal-title {
+    font-weight: 600;
+    color: #1e3a8a;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    border-top: 1px solid #eee;
+    padding: 15px 20px;
+}
+
+/* 分页样式 */
+.pagination {
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.page-item.active .page-link {
+    background-color: #1e40af;
+    border-color: #1e40af;
+}
+
+.page-link {
+    color: #1e40af;
+    padding: 8px 16px;
+}
+
+.page-link:hover {
+    color: #1e3a8a;
+    background-color: #e9ecef;
+}
+
+/* 警告消息 */
+.fixed-alerts {
+    position: fixed;
+    top: 80px; /* 导航栏高度 + 一点间距 */
+    right: 20px;
+    max-width: 350px;
+    z-index: 1050; /* 确保在大多数元素之上 */
+}
+
+.fixed-alerts .alert {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    opacity: 0.95;
+    transition: all 0.3s ease;
+}
+
+.fixed-alerts .alert:hover {
+    opacity: 1;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.alert {
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+}
+
+.alert-success {
+    background-color: #ecfdf5;
+    border-color: #10b981;
+    color: #047857;
+}
+
+.alert-danger {
+    background-color: #fef2f2;
+    border-color: #ef4444;
+    color: #b91c1c;
+}
+
+.alert-warning {
+    background-color: #fffbeb;
+    border-color: #f59e0b;
+    color: #b45309;
+}
+
+.alert-info {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+}
+
+/* 仪表盘卡片 */
+.dashboard-card {
+    text-align: center;
+    padding: 15px;
+}
+
+.dashboard-card h3 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 10px 0;
+    color: #1e3a8a;
+}
+
+.dashboard-card p {
+    color: #6b7280;
+    margin-bottom: 0;
+}
+
+/* 系统状态页面 */
+.system-logs {
+    background-color: #1f2937;
+    color: #d1d5db;
+    padding: 15px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+/* 统计数据卡片 */
+.stat-card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    margin-right: 15px;
+}
+
+.stat-details h4 {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.stat-details p {
+    font-size: 1.8rem;
+    margin-bottom: 0;
+    font-weight: 700;
+    color: #1e3a8a;
+}
+
+/* 页脚样式 */
+footer {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+
+    .table td, .table th {
+        padding: 8px;
+    }
+
+    .dashboard-card h3 {
+        font-size: 1.5rem;
+    }
+}
+
+.navbar-nav .user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 8px;
+}

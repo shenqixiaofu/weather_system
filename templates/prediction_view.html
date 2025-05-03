@@ -1,0 +1,171 @@
+{% extends "layout.html" %}
+{% block title %}天气预测分析 - 气象数据可视化平台{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/prediction_view.css">
+{% endblock %}
+{% block content %}
+<div class="container main-content">
+     <div class="d-flex justify-content-between align-items-center mb-0">
+        <div>
+            <h1 class="dashboard-title d-inline-block">
+                <i class="fas fa-chart-line me-2 text-info"></i>天气预测分析
+            </h1>
+        </div>
+        <div>
+            <div class="text-end">
+                <span class="badge bg-info text-white me-2">
+                    <i class="fas fa-microchip me-1"></i>机器学习
+                </span>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-secondary text-white">
+                    <i class="fas fa-brain me-1"></i>时间序列分析
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="mb-2" style = "height: 15px;"></div>
+    <!-- 筛选条件 -->
+    <div class="filter-box card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-10">
+                    <div class="d-flex justify-content-flex-start align-items-center">
+                        <div class="col-md-4 me-3">
+                            <select id="provinceSelect" class="form-select">
+                                <option value="">请选择省份</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 me-3">
+                            <select id="citySelect" class="form-select" disabled>
+                                <option value="">请先选择省份</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 text-end">
+                    <div>
+                        <button onclick="loadPrediction()" class="btn" style="background-color: #2243b6; border-color: #003366; color: white;">
+                            <i class="fas fa-satellite-dish me-2" style="color: white"></i><span style="color: white;">启动预测</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载动画 -->
+    <div class="loader text-center" id="loader" style="display: none;">
+        <div class="spinner-border text-info" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted">正在生成预测数据...</p>
+    </div>
+
+    <!-- 预测指标卡片 -->
+    <div class="row row-cols-1 row-cols-md-4 g-4" id="prediction-metrics" style="display: none;">
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-temperature-high fa-2x mb-3 text-danger"></i>
+                    <div class="metric-value" id="avg-high">--°C</div>
+                    <div class="text-muted">预测期平均高温</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-temperature-low fa-2x mb-3 text-info"></i>
+                    <div class="metric-value" id="avg-low">--°C</div>
+                    <div class="text-muted">预测期平均低温</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-arrow-up fa-2x mb-3 text-success"></i>
+                    <div class="metric-value" id="max-temp">--°C</div>
+                    <div class="text-muted">预测最高温度</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-arrow-down fa-2x mb-3 text-primary"></i>
+                    <div class="metric-value" id="min-temp">--°C</div>
+                    <div class="text-muted">预测最低温度</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预测趋势图 -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <div class="chart-container" id="predictionChart"></div>
+        </div>
+    </div>
+
+    <!-- 预测温度区间图 -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <div class="chart-container" id="temperatureRangeChart"></div>
+        </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="card shadow-sm mt-4" id="tableSection" style="display: none;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="m-0"><i class="fas fa-table me-2 text-info"></i>预测详细数据</h5>
+            <button class="btn btn-outline-info btn-sm">
+                <i class="fas fa-download me-1"></i>导出数据
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>日期</th>
+                            <th>最高温度 (°C)</th>
+                            <th>最低温度 (°C)</th>
+                            <th>温度范围 (°C)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="predictionBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模型信息卡片 -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h4><i class="fas fa-robot me-2 text-info"></i>预测模型信息</h4>
+                    <p>
+                        本预测系统基于<strong class="text-info">梯度提升回归器模型</strong>，通过分析历史天气数据和时间特征预测未来温度变化。
+                        特征包括时间特征、历史滞后值和滑动窗口统计指标。
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <h5 class="text-muted">模型准确率</h5>
+                            <div class="metric-value text-info">95.8%</div>
+                            <div class="text-muted">基于验证集评估</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/prediction_view.js"></script>
+{% endblock %}

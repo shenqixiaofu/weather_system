@@ -1,0 +1,60 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}数据库备份管理 - 天气系统管理后台{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>数据库备份管理</h2>
+
+    <div class="my-3">
+        <a href="{{ url_for('admin_backup_database') }}" class="btn btn-primary">
+            <i class="bi bi-download"></i> 创建新备份
+        </a>
+        <a href="{{ url_for('admin_system_status') }}" class="btn btn-secondary">
+            返回系统状态
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            备份文件列表
+        </div>
+        <div class="card-body">
+            {% if backup_files %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>文件名</th>
+                        <th>大小 (MB)</th>
+                        <th>备份时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in backup_files %}
+                    <tr>
+                        <td>{{ file.name }}</td>
+                        <td>{{ file.size }} MB</td>
+                        <td>{{ file.time }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('admin_restore_database', filename=file.name) }}"
+                                   class="btn btn-sm btn-warning"
+                                   onclick="return confirm('确定要恢复到这个备份吗？这将覆盖当前所有数据！');">
+                                    恢复
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-info">
+                暂无备份文件
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

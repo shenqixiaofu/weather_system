@@ -1,0 +1,53 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}编辑用户 - 天气系统管理后台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>编辑用户</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="username" class="form-label">用户名</label>
+                <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">邮箱</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label">电话</label>
+                <input type="text" class="form-control" id="phone" name="phone" value="{{ user.phone }}">
+            </div>
+            <div class="mb-3">
+                <label for="bio" class="form-label">简介</label>
+                <textarea class="form-control" id="bio" name="bio">{{ user.bio }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label for="location" class="form-label">位置</label>
+                <input type="text" class="form-control" id="location" name="location" value="{{ user.location }}">
+            </div>
+            <div class="mb-3">
+                <label for="occupation" class="form-label">职业</label>
+                <input type="text" class="form-control" id="occupation" name="occupation" value="{{ user.occupation }}">
+            </div>
+            <div class="mb-3">
+                <label for="avatar_file" class="form-label">头像</label>
+                <input type="file" class="form-control" id="avatar_file" name="avatar_file">
+            </div>
+
+            <!-- 使用 Flexbox 居中按钮 -->
+            <div class="d-flex justify-content-center">
+                <button type="submit" class="btn btn-primary me-2">保存更改</button>
+                <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">返回用户列表</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

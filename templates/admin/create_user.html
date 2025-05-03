@@ -1,0 +1,117 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}创建用户 - 天气系统管理后台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>创建新用户</h2>
+        <hr>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <form id="createUserForm" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="username" class="form-label">用户名</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+                <div id="usernameError" class="text-danger"></div>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">邮箱</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+                <div id="emailError" class="text-danger"></div>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">密码</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+                <div id="passwordError" class="text-danger"></div>
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label">电话</label>
+                <input type="text" class="form-control" id="phone" name="phone">
+            </div>
+            <div class="mb-3">
+                <label for="bio" class="form-label">简介</label>
+                <textarea class="form-control" id="bio" name="bio"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="location" class="form-label">位置</label>
+                <input type="text" class="form-control" id="location" name="location">
+            </div>
+            <div class="mb-3">
+                <label for="occupation" class="form-label">职业</label>
+                <input type="text" class="form-control" id="occupation" name="occupation">
+            </div>
+            <div class="mb-3">
+                <label for="avatar_file" class="form-label">头像</label>
+                <input type="file" class="form-control" id="avatar_file" name="avatar_file">
+            </div>
+            <!-- 使用 Flexbox 居中按钮 -->
+            <div class="d-flex justify-content-center">
+                <button type="button" class="btn btn-primary me-2" onclick="validateForm()">创建用户</button>
+                <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">返回用户列表</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取所有flash消息
+            var flashMessages = document.querySelectorAll('.alert');
+
+            // 为每个flash消息设置自动关闭定时器
+            flashMessages.forEach(function(message) {
+                // 5秒后开始关闭动画
+                setTimeout(function() {
+                    // 创建Bootstrap alert对象并关闭
+                    var bsAlert = new bootstrap.Alert(message);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+        function validateForm() {
+        // 获取输入框元素
+        var usernameInput = document.getElementById('username');
+        var emailInput = document.getElementById('email');
+        var passwordInput = document.getElementById('password');
+
+        // 获取错误信息显示元素
+        var usernameError = document.getElementById('usernameError');
+        var emailError = document.getElementById('emailError');
+        var passwordError = document.getElementById('passwordError');
+
+        // 重置错误信息
+        usernameError.textContent = '';
+        emailError.textContent = '';
+        passwordError.textContent = '';
+
+        // 验证用户名
+        if (usernameInput.value.trim() === '') {
+            usernameError.textContent = '用户名不能为空。';
+            usernameInput.focus();
+            return false; // 阻止表单提交
+        }
+
+        // 验证邮箱
+        if (emailInput.value.trim() === '') {
+            emailError.textContent = '邮箱不能为空。';
+            emailInput.focus();
+            return false; // 阻止表单提交
+        }
+
+        // 验证密码
+        if (passwordInput.value.trim() === '') {
+            passwordError.textContent = '密码不能为空。';
+            passwordInput.focus();
+            return false; // 阻止表单提交
+        }
+
+        // 如果所有验证都通过，则提交表单
+        document.getElementById('createUserForm').submit();
+        return true;
+
+    }
+</script>
+{% endblock %}

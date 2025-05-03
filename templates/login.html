@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeatherAuth - 观测站登录</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome-6.4.0/css/all.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body>
+    <div class="weather-bg"></div>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="dynamic-header">
+                <i class="fas fa-sun weather-icon"></i>
+                <h1 class="gradient-text">欢迎回到观测站</h1>
+            </div>
+            <div class="flash-container" style="min-height: 50px;">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="cosmic-alert alert-{{ category }}">
+                                <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <form method="POST" action="{{ url_for('login') }}" class="neon-form">
+                <div class="input-group floating-label">
+                    <input type="text" id="username" name="username" required value="{{ request.form.username }}" autocomplete="username" placeholder=" ">
+                    <label for="username"><i class="fas fa-user-astronaut"></i> 用户名</label>
+                    <div class="underline"></div>
+                </div>
+                <div class="input-group floating-label">
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder=" ">
+                    <label for="password"><i class="fas fa-lock"></i> 访问密码</label>
+                    <div class="underline"></div>
+                </div>
+                <button type="submit" class="quantum-btn">进入观测站</button>
+            </form>
+            <div class="auth-footer">
+                <a href="{{ url_for('register') }}" class="portal-link">创建新账号</a>
+                |
+                <a href="#" class="portal-link" onclick="showComingSoon()">忘记密码？</a>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/login.js"></script>
+</body>
+</html>

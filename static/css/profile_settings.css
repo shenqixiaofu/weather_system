@@ -1,0 +1,134 @@
+
+.settings-card {
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    padding: 20px;
+    margin-bottom: 20px;
+    scroll-margin-top: 70px;
+}
+.settings-card-header {
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+.card-highlight {
+    border-left: 4px solid #3498db;
+}
+.profile-picture {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+.picture-upload-container {
+    position: relative;
+    display: inline-block;
+}
+.picture-upload-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: #3498db;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid white;
+}
+.form-label {
+    font-weight: 500;
+    color: #495057;
+}
+.save-container {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+.settings-nav {
+    position: sticky;
+    top: 20px;
+}
+.settings-nav-link {
+    padding: 10px 15px;
+    display: block;
+    color: #495057;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.settings-nav-link:hover {
+    background-color: #f8f9fa;
+    color: #3498db;
+}
+.settings-nav-link.active {
+    background-color: #e9f2fb;
+    color: #3498db;
+    font-weight: 500;
+}
+.settings-nav-link i {
+    width: 20px;
+    text-align: center;
+    margin-right: 8px;
+}
+.alert-info {
+    background-color: #e9f2fb;
+    border-color: #c5e1f9;
+}
+.text-password {
+    font-family: monospace;
+    letter-spacing: 0.2em;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #3498db;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}

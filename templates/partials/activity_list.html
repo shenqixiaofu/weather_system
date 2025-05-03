@@ -1,0 +1,26 @@
+{% for activity in user_activities %}
+<li class="activity-item">
+    <div class="activity-icon activity-icon-{{ activity.activity_type }}">
+        <i class="fas {{ activity.icon }}"></i>
+    </div>
+    <div class="activity-content">
+        <h3>{{ activity.description }}</h3>
+        <p>{{ activity.related_data }}</p>
+        {% if activity.url %}
+        <a href="{{ activity.url }}" class="activity-link">
+            <i class="fas fa-external-link-alt me-1"></i>查看
+        </a>
+        {% endif %}
+    </div>
+    <div class="activity-meta">
+        <span class="activity-time" title="{{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}">{{ activity.timestamp.strftime('%m-%d %H:%M') }}</span>
+        <div class="activity-actions">
+            <a href="{{ url_for('delete_activity', activity_id=activity.id) }}"
+               onclick="return confirm('确定要删除这条活动记录吗?')"
+               class="btn btn-sm text-danger">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </div>
+    </div>
+</li>
+{% endfor %}

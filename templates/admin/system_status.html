@@ -1,0 +1,173 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}系统状态 - 天气系统管理后台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>系统状态</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                数据库状态
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <td>天气数据记录</td>
+                            <td><strong>{{ status.db_records.weather_data }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>预报数据记录</td>
+                            <td><strong>{{ status.db_records.forecasts }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>小时预报记录</td>
+                            <td><strong>{{ status.db_records.hourly_forecasts }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>区域温度记录</td>
+                            <td><strong>{{ status.db_records.region_temperatures }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                模型状态
+            </div>
+            <div class="card-body">
+                <p>已训练模型数量: <strong>{{ status.trained_models }}</strong></p>
+                <p>模型存储路径: <code>{{ predictor.model_path }}</code></p>
+
+                <div class="mt-3">
+                    <h6>系统操作</h6>
+                    <a href="{{ url_for('admin_clear_cache') }}" class="btn btn-warning btn-sm"
+                       onclick="return confirm('确定要清除缓存数据吗？')">
+                        清除缓存
+                    </a>
+                    <a href="{{ url_for('admin_update_provinces') }}" class="btn btn-info btn-sm">
+                        更新省份数据
+                    </a>
+                    <a href="{{ url_for('admin_backup_database') }}" class="btn btn-primary btn-sm">
+                        创建数据库备份
+                    </a>
+                    <a href="{{ url_for('admin_list_backups') }}" class="btn btn-info btn-sm">
+                        查看备份历史
+                    </a>
+                    <form method="POST" action="{{ url_for('restore_database') }}" id="restore-form" class="d-inline">
+                        {{ backup_form.hidden_tag() }}
+                        <input type="hidden" name="confirm_restore" id="confirm_restore" value="false">
+                        <div class="d-inline-block">
+                            <select class="form-select form-select-sm d-inline-block" name="backup_file" id="backup_file" style="width: auto;">
+                                <option value="">选择备份文件</option>
+                                {% for backup in backups %}
+                                <option value="{{ backup }}">{{ backup }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="btn btn-danger btn-sm" id="restore-button">
+                                <i class="fas fa-undo me-2"></i>恢复数据
+                            </button>
+                        </div>
+                        <div id="restore-status" class="mt-2"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                系统日志
+            </div>
+            <div class="card-body">
+                <div class="alert alert-secondary persistent-alert">
+                    <pre style="max-height: 300px; overflow-y: auto;">{{ system_logs }}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // 获取所有flash消息，排除class为persistent-alert的元素
+        var flashMessages = document.querySelectorAll('.alert:not(.persistent-alert)');
+
+        flashMessages.forEach(function (message) {
+            setTimeout(function () {
+                var bsAlert = new bootstrap.Alert(message);
+                bsAlert.close();
+            }, 3000);
+        });
+
+        // 数据恢复功能
+        document.getElementById('restore-button').addEventListener('click', function() {
+            var backupFile = document.getElementById('backup_file').value;
+            if (!backupFile) {
+                alert('请先选择要恢复的备份文件');
+                return;
+            }
+            
+            if (confirm('确定要恢复数据吗？这将覆盖当前的数据库！')) {
+                // 设置确认标志为true
+                document.getElementById('confirm_restore').value = 'true';
+                
+                var form = document.getElementById('restore-form');
+                var formData = new FormData(form);
+                
+                // 显示加载状态
+                var restoreButton = document.getElementById('restore-button');
+                var statusDiv = document.getElementById('restore-status');
+                restoreButton.disabled = true;
+                restoreButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>恢复中...';
+                statusDiv.innerHTML = '<div class="alert alert-info">正在恢复数据库，请稍候...</div>';
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': formData.get('csrf_token'),
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应不正常');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    restoreButton.disabled = false;
+                    restoreButton.innerHTML = '<i class="fas fa-undo me-2"></i>恢复数据';
+                    statusDiv.innerHTML = `<div class="alert alert-${data.type}">${data.message}</div>`;
+                    if (data.type === 'success') {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    }
+                })
+                .catch(error => {
+                    restoreButton.disabled = false;
+                    restoreButton.innerHTML = '<i class="fas fa-undo me-2"></i>恢复数据';
+                    statusDiv.innerHTML = `<div class="alert alert-danger">恢复过程中发生错误: ${error.message}</div>`;
+                });
+            }
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,216 @@
+{% extends "admin/base.html" %}
+
+{% block title %}仪表盘 - 天气系统管理后台{% endblock %}
+
+{% block content %}
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800" style="font-size: 2rem;">仪表盘</h1>
+    <a href="{{ url_for('admin_generate_report') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+        <i class="fas fa-download fa-sm text-white-50"></i> 生成报告
+    </a>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+    <!-- 天气数据统计卡片 -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="font-weight-bold text-primary text-uppercase mb-1" style="font-size: 1.1rem;">
+                            天气数据记录</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" style="font-size: 1.5rem;">{{ weather_data_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-cloud fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 城市数量卡片 -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="font-weight-bold text-success text-uppercase mb-1" style="font-size: 1.1rem;">
+                            城市数量</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" style="font-size: 1.5rem;">{{ city_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-city fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 区域数量卡片 -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="font-weight-bold text-info text-uppercase mb-1" style="font-size: 1.1rem;">
+                            区域数量</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" style="font-size: 1.5rem;">{{ region_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-map-marked-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预测模型数量卡片 -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="font-weight-bold text-warning text-uppercase mb-1" style="font-size: 1.1rem;">
+                            预测模型数量</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" style="font-size: 1.5rem;">{{ model_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+    <!-- 最近天气数据 -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary" style="font-size: 1.25rem;">最近天气数据</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0" style="font-size: 1.1rem;">
+                        <thead>
+                            <tr>
+                                <th>城市</th>
+                                <th>日期</th>
+                                <th>最高温度</th>
+                                <th>最低温度</th>
+                                <th>天气</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for weather in recent_weather %}
+                            <tr>
+                                <td>{{ weather.city_name }}</td>
+                                <td>{{ weather.date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ weather.temp_max }}°C</td>
+                                <td>{{ weather.temp_min }}°C</td>
+                                <td>{{ weather.weather }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近预报数据 -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary" style="font-size: 1.25rem;">最近预报数据</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0" style="font-size: 1.1rem;">
+                        <thead>
+                            <tr>
+                                <th>城市</th>
+                                <th>预报日期</th>
+                                <th>最高温度</th>
+                                <th>最低温度</th>
+                                <th>天气</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for forecast in recent_forecast %}
+                            <tr>
+                                <td>{{ forecast.city }}</td>
+                                <td>{{ forecast.fx_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ forecast.temp_max }}°C</td>
+                                <td>{{ forecast.temp_min }}°C</td>
+                                <td>{{ forecast.text_day }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header" style="font-size: 1.25rem; font-weight: bold;">
+                快速操作
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_weather_data') }}" class="btn btn-primary btn-block" style="font-size: 1.1rem;">
+                            <i class="fas fa-database me-2"></i> 查看天气数据
+                        </a><br>
+                        <small class="text-muted" style="font-size: 1rem;">浏览和管理已收集的天气数据。</small>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_prediction_models') }}" class="btn btn-success btn-block" style="font-size: 1.1rem;">
+                            <i class="fas fa-chart-line me-2"></i> 管理预测模型
+                        </a><br>
+                         <small class="text-muted" style="font-size: 1rem;">训练、部署和评估天气预测模型。</small>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_cities') }}" class="btn btn-info btn-block" style="font-size: 1.1rem;">
+                            <i class="fas fa-city me-2"></i> 城市管理
+                        </a><br>
+                         <small class="text-muted" style="font-size: 1rem;">添加、删除和修改城市数据。</small>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_system_status') }}" class="btn btn-warning btn-block" style="font-size: 1.1rem;">
+                            <i class="fas fa-server me-2"></i> 查看系统状态
+                        </a><br>
+                         <small class="text-muted" style="font-size: 1rem;">监控系统资源使用情况和日志。</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取所有flash消息
+        var flashMessages = document.querySelectorAll('.alert');
+
+        // 为每个flash消息设置自动关闭定时器
+        flashMessages.forEach(function(message) {
+            // 5秒后开始关闭动画
+            setTimeout(function() {
+                // 创建Bootstrap alert对象并关闭
+                var bsAlert = new bootstrap.Alert(message);
+                bsAlert.close();
+            }, 5000);
+        });
+    });
+</script>
+{% endblock %}

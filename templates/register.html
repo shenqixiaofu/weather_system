@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeatherAuth - 创建观测站</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome-6.4.0/css/all.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+</head>
+<body>
+    <div class="weather-bg"></div>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="dynamic-header">
+                <i class="fas fa-sun weather-icon"></i>
+                <h1 class="gradient-text">创建观测账户</h1>
+                <p class="sub-title">加入气象数据可视化平台</p>
+            </div>
+            <form class="neon-form" method="POST" action="{{ url_for('register') }}">
+                <div class="input-group floating-label">
+                    <input type="text" id="username" name="username" required pattern="[A-Za-z0-9]{4,20}" title="4-20位字母数字组合" autocomplete="username" placeholder=" ">
+                    <label for="username"><i class="fas fa-user-astronaut"></i> 用户名</label>
+                    <div class="underline"></div>
+                </div>
+                <div class="input-group floating-label">
+                        <input type="password" id="password" name="password" required minlength="8" data-security-check autocomplete="new-password" placeholder=" ">
+                        <label for="password"><i class="fas fa-shield-alt"></i> 访问密码</label>
+                        <div class="underline"></div>
+                </div>
+                <div class="input-group floating-label">
+                    <input type="password" id="confirm_password" name="confirm_password" required data-match="password" autocomplete="new-password" placeholder=" ">
+                    <label for="confirm_password"><i class="fas fa-redo-alt"></i> 确认密码</label>
+                    <div class="underline"></div>
+                </div>
+                <button type="submit" class="quantum-btn">激活账户</button>
+            </form>
+            <div class="auth-footer">
+                <a href="{{ url_for('login') }}" class="portal-link"><i class="fas fa-black-hole"></i> 已有账户？点我登录</a>
+                <a href="#" class="portal-link" onclick="showComingSoon()"><i class="fas fa-broadcast-tower"></i> 注册帮助</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/register.js"></script>
+</body>
+</html>

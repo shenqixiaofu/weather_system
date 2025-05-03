@@ -1,0 +1,427 @@
+{% extends "layout.html" %}
+
+{% block title %}系统设置 - 气象数据可视化平台{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/profile_settings.css">
+<link rel="stylesheet" href="/static/select2/css/select2.css">
+<script src="/static/select2/js/select2.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 main-content"s>
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('profile') }}">个人主页</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">账号设置</li>
+                </ol>
+                {% if not current_user.is_admin %}
+                <button type="button" class="btn btn-outline-warning btn-sm float-end" data-bs-toggle="modal" data-bs-target="#upgradeAdminModal">
+                    <i class="fas fa-crown"></i> 升级为管理员
+                </button>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+    <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-lg-3 mb-4">
+            <div class="settings-nav">
+                <h5 class="mb-3">设置</h5>
+                <a href="#profile-section" class="settings-nav-link active">
+                    <i class="fas fa-user"></i> 个人资料
+                </a>
+                <a href="#account-section" class="settings-nav-link">
+                    <i class="fas fa-shield-alt"></i> 账号安全
+                </a>
+                <a href="#notifications-section" class="settings-nav-link">
+                    <i class="fas fa-bell"></i> 通知设置
+                </a>
+                <a href="#preferences-section" class="settings-nav-link">
+                    <i class="fas fa-sliders-h"></i> 偏好设置
+                </a>
+                <a href="#data-section" class="settings-nav-link">
+                    <i class="fas fa-database"></i> 数据管理
+                </a>
+                <hr>
+                {% if current_user.is_admin %}  <!-- 仅当用户是管理员时显示 -->
+                <a href="{{ url_for('admin_dashboard') }}" class="settings-nav-link">
+                    <i class="fas fa-tachometer-alt"></i> 管理员面板
+                </a>
+                {% endif %}
+                <a href="{{ url_for('profile') }}" class="settings-nav-link">
+                    <i class="fas fa-arrow-left"></i> 返回个人主页
+                </a>
+            </div>
+        </div>
+        <!-- 右侧内容 -->
+        <div class="col-lg-9">
+            <!-- 个人资料 -->
+            <div id="profile-section" class="settings-card card-highlight">
+                <div class="settings-card-header">
+                    <h5><i class="fas fa-user text-primary me-2"></i>个人资料</h5>
+                </div>
+                <form id="profile-form" action="{{ url_for('profile_settings') }}" method="POST" enctype="multipart/form-data">
+                    <div class="row align-items-center mb-4">
+                        <div class="col-md-3 text-center">
+                            <div class="picture-upload-container">
+                                <img src="{{ url_for('static', filename='images/avatars/' + current_user.avatar_file) if current_user.avatar_file else url_for('static', filename='images/avatars/default-avatar.png') }}" alt="用户头像" class="profile-picture">
+                                <label for="avatar-upload" class="picture-upload-btn">
+                                    <i class="fas fa-camera"></i>
+                                </label>
+                                <input type="file" id="avatar-upload" name="avatar" class="d-none" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">用户名</label>
+                                <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}">
+                            </div>
+                            <div class="mb-0">
+                                <label for="bio" class="form-label">个人简介</label>
+                                <textarea class="form-control" id="bio" name="bio" rows="2">{{ current_user.bio if current_user.bio else '气象数据可视化平台的忠实fumofumo' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">电子邮箱</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email if current_user.email else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">手机号码</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" value="{{ current_user.phone if current_user.phone else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="location" class="form-label">所在地区</label>
+                                <select class="form-select" id="location" name="location">
+                                    <option value="">选择地区</option>
+                                    <option value="大陆地区" {{ 'selected' if current_user.location == '大陆地区' else '' }}>大陆地区</option>
+                                    <option value="港澳台地区" {{ 'selected' if current_user.location == '港澳台地区' else '' }}>港澳台地区</option>
+                                    <option value="海外" {{ 'selected' if current_user.location == '海外' else '' }}>海外</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="occupation" class="form-label">职业</label>
+                                <select class="form-select" id="occupation" name="occupation">
+                                    <option value="">选择职业</option>
+                                    <option value="气象工作者" {{ 'selected' if current_user.occupation == '气象工作者' else '' }}>气象工作者</option>
+                                    <option value="研究人员" {{ 'selected' if current_user.occupation == '研究人员' else '' }}>研究人员</option>
+                                    <option value="学生" {{ 'selected' if current_user.occupation == '学生' else '' }}>学生</option>
+                                    <option value="教师" {{ 'selected' if current_user.occupation == '教师' else '' }}>教师</option>
+                                    <option value="教师" {{ 'selected' if current_user.occupation == '富摩' else '' }}>教师</option>
+                                    <option value="其他" {{ 'selected' if current_user.occupation == '其他' else '' }}>其他</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="save-container">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <span class="text-muted">上次更新: {{ current_user.profile_updated_at.strftime('%Y-%m-%d %H:%M') if current_user.profile_updated_at else '尚未更新' }}</span>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>保存更改
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 账号安全 -->
+            <div id="account-section" class="settings-card card-highlight">
+                <div class="settings-card-header">
+                    <h5><i class="fas fa-shield-alt text-primary me-2"></i>账号安全</h5>
+                </div>
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <h6 class="mb-0">登录密码</h6>
+                            <p class="text-muted mb-0 small">上次修改: {{ current_user.password_updated_at.strftime('%Y-%m-%d') if current_user.password_updated_at else '从未' }}</p>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#passwordModal">
+                            修改
+                        </button>
+                    </div>
+                    <div class="text-password">••••••••</div>
+                </div>
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <h6 class="mb-0">双因素认证</h6>
+                            <p class="text-muted mb-0 small">提高账号安全性</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="twoFactorSwitch" {{ 'checked' if current_user.two_factor_enabled else '' }}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="alert alert-info" role="alert" id="securityAlert">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="fas fa-info-circle fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="alert-heading mb-1">安全提示</h6>
+                            <p class="mb-0 small">为了您的账号安全，建议定期修改密码，并避免在不同网站使用相同的密码。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 通知设置 -->
+            <div id="notifications-section" class="settings-card card-highlight">
+                <div class="settings-card-header">
+                    <h5><i class="fas fa-bell text-primary me-2"></i>通知设置</h5>
+                </div>
+                <div class="mb-3">
+                    <h6 class="mb-3">电子邮件通知</h6>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="emailWeatherAlerts" {{ 'checked' if current_user.email_weather_alerts else '' }}>
+                        <label class="form-check-label" for="emailWeatherAlerts">
+                            天气预警通知
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="emailWeeklyReport" {{ 'checked' if current_user.email_weekly_report else '' }}>
+                        <label class="form-check-label" for="emailWeeklyReport">
+                            每周天气报告
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="emailSystemUpdates" {{ 'checked' if current_user.email_system_updates else '' }}>
+                        <label class="form-check-label" for="emailSystemUpdates">
+                            系统更新和公告
+                        </label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6 class="mb-3">应用内通知</h6>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="appWeatherAlerts" {{ 'checked' if current_user.app_weather_alerts else '' }}>
+                        <label class="form-check-label" for="appWeatherAlerts">
+                            天气预警通知
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="appDataUpdates" {{ 'checked' if current_user.app_data_updates else '' }}>
+                        <label class="form-check-label" for="appDataUpdates">
+                            数据更新提醒
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <!-- 偏好设置 -->
+            <div id="preferences-section" class="settings-card card-highlight">
+                <div class="settings-card-header">
+                    <h5><i class="fas fa-sliders-h text-primary me-2"></i>偏好设置</h5>
+                </div>
+                <div class="mb-3">
+                    <label for="defaultCity" class="form-label">默认城市</label>
+                    <input type="hidden" id="defaultCityValue" value="{{ current_user.default_city }}">
+                    <select class="form-select select2" id="defaultCity" name="defaultCity" data-default-city="{{ current_user.default_city or '' }}">
+                        <option value="">选择默认显示的城市</option>
+                    </select>
+                    <div class="form-text text-muted">打开系统时默认显示的城市天气</div>
+                </div>
+                <div class="mb-3">
+                    <label for="theme" class="form-label">界面主题</label>
+                    <select class="form-select" id="theme" name="theme">
+                        <option value="light" {{ 'selected' if current_user.theme == 'light' else '' }}>浅色主题</option>
+                        <option value="dark" {{ 'selected' if current_user.theme == 'dark' else '' }}>深色主题</option>
+                        <option value="system" {{ 'selected' if current_user.theme == 'system' else '' }}>跟随系统</option>
+                    </select>
+                </div>
+            </div>
+            <!-- 数据管理 -->
+            <div id="data-section" class="settings-card card-highlight">
+                <div class="settings-card-header">
+                    <h5><i class="fas fa-database text-primary me-2"></i>数据管理</h5>
+                </div>
+                <div class="mb-4">
+                    <h6>搜索历史</h6>
+                    <p class="text-muted small mb-2">管理您在平台上的搜索记录</p>
+                    <button class="btn btn-outline-secondary btn-sm" id="clearSearchHistory">
+                        <i class="fas fa-trash-alt me-1"></i>清除搜索历史
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <h6>浏览数据</h6>
+                    <p class="text-muted small mb-2">管理您在平台上的浏览记录</p>
+                    <button class="btn btn-outline-secondary btn-sm" id="clearBrowsingData">
+                        <i class="fas fa-trash-alt me-1"></i>清除浏览数据
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <h6>收藏位置</h6>
+                    <p class="text-muted small mb-2">管理您收藏的城市或地区</p>
+                    <button class="btn btn-outline-primary btn-sm" id="manageFavoritesBtn">
+                        <i class="fas fa-cog me-1"></i>管理收藏
+                    </button>
+                </div>
+                <div class="alert alert-danger" role="alert">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="fas fa-exclamation-triangle fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="alert-heading mb-1">账号删除</h6>
+                            <p class="mb-2 small">删除账号将永久移除您的所有个人信息和数据，此操作无法撤销。</p>
+                            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                                <i class="fas fa-user-slash me-1"></i>删除我的账号
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 修改密码模态框 -->
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="passwordModalLabel">修改密码</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="password-form" action="{{ url_for('change_password') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">当前密码</label>
+                        <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">新密码</label>
+                        <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                        <div class="form-text">密码长度至少8位，包含字母、数字和特殊字符</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">确认新密码</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="submit" form="password-form" class="btn btn-primary">保存更改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除账号确认模态框 -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAccountModalLabel">删除账号确认</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    请确认您真的要删除您的账号。此操作无法撤销，所有与您账号相关的数据将被永久删除。
+                </div>
+                <form id="delete-account-form" action="#" method="POST">
+                    <div class="mb-3">
+                        <label for="deleteConfirmPassword" class="form-label">请输入您的密码以确认</label>
+                        <input type="password" class="form-control" id="deleteConfirmPassword" name="password" required>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete" name="confirmDelete" required>
+                        <label class="form-check-label" for="confirmDelete">
+                            我确认我想要永久删除我的账号和所有相关数据
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="submit" form="delete-account-form" class="btn btn-danger">删除账号</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 收藏管理模态框 -->
+<div class="modal fade" id="manageFavoritesModal" tabindex="-1" aria-labelledby="manageFavoritesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manageFavoritesModalLabel">管理收藏位置</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="favoritesList" class="mb-3">
+                    <div class="text-center py-3" id="loadingFavorites">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                    </div>
+                    <div id="noFavoritesMessage" class="text-center py-3 d-none">
+                        <p class="text-muted">您还没有收藏任何城市</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 升级管理员模态框 -->
+<div class="modal fade" id="upgradeAdminModal" tabindex="-1" aria-labelledby="upgradeAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="upgradeAdminModalLabel">升级为管理员</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="upgrade-admin-form" action="{{ url_for('upgrade_to_admin') }}" method="post">
+                    <div class="mb-3">
+                        <label for="invite_code" class="form-label">请输入邀请码：</label>
+                        <input type="text" class="form-control" id="invite_code" name="invite_code" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">升级</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        console.log("当前用户的默认城市：", "{{ current_user.default_city }}");
+        // 消息提示淡出
+        document.querySelectorAll('.alert:not(#securityAlert)').forEach(alert => {
+            setTimeout(() => {
+                alert.style.opacity = 0;
+            }, 5000);
+        });
+</script>
+<script src="/static/js/profile_settings.js"></script>
+{% endblock %}

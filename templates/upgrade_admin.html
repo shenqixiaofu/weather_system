@@ -1,0 +1,14 @@
+<!-- upgrade_admin.html -->
+{% extends "layout.html" %}
+{% block content %}
+<div class="container">
+    <h2>升级为管理员</h2>
+    <form method="post">
+        <div class="mb-3">
+            <label for="invite_code" class="form-label">请输入邀请码：</label>
+            <input type="text" class="form-control" id="invite_code" name="invite_code" required>
+        </div>
+        <button type="submit" class="btn btn-primary">升级</button>
+    </form>
+</div>
+{% endblock %}

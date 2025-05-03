@@ -1,0 +1,86 @@
+
+.map-header {
+    background-color: #1e88e5; /* 使用纯色背景，确保与文字有足够对比 */
+    border-radius: 0.25rem 0.25rem 0 0;
+}
+
+.map-container {
+    border-radius: 0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05) inset;
+    background-color: #fafbfe;
+}
+
+.pulsate {
+    animation: pulsate 1.5s ease-out infinite;
+    opacity: 0.6;
+}
+
+@keyframes pulsate {
+    0% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.6;
+    }
+}
+
+.btn-control {
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.btn-control:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.weather-info-panel {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-left: 4px solid #1e88e5;
+}
+
+.last-updated {
+    font-size: 0.75rem;
+}
+
+/* 确保 body 和 html 充满整个视口 */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* 防止出现滚动条 */
+}
+
+/* map-container 的样式 */
+#map-container {
+    width: 100%;
+    height: 100%;  /* 或者一个固定的高度, 例如 600px, 根据你的布局来定 */
+    /* 其他样式 */
+}
+
+/* 全屏时的样式 (使用 :fullscreen 伪类) */
+#map-container:fullscreen {
+    width: 100%;
+    height: 100%;
+}
+
+/* WebKit 内核浏览器的全屏样式 */
+#map-container:-webkit-full-screen {
+    width: 100%;
+    height: 100%;
+}
+
+ /* Firefox 内核浏览器的全屏样式 */
+#map-container:-moz-full-screen {
+    width: 100%;
+    height: 100%;
+}
+
+ /* IE/Edge 浏览器的全屏样式 */
+#map-container:-ms-fullscreen {
+    width: 100%;
+    height: 100%;
+}

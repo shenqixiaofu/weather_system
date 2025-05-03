@@ -1,0 +1,329 @@
+ <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- 添加 favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicons/favicon.ico') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicons/favicon.ico') }}">
+    <title>{% block title %}天气系统管理后台{% endblock %}</title>
+    <link href="{{ url_for('static', filename='fontawesome-6.4.0/css/all.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/fonts.googleapis.com_css_family=Nunito.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
+    <style>
+        /* 自定义导航栏样式 */
+        .sidebar {
+            width: 12rem !important;
+            background-color: #1e3a8a !important;
+            transition: width 0.3s ease;
+        }
+        .sidebar .nav-item {
+            width: 12rem !important;
+            transition: width 0.3s ease;
+        }
+        .sidebar .nav-item.active {
+            width: 12rem !important;
+        }
+        .sidebar .nav-item .nav-link {
+            width: 12rem !important;
+            transition: width 0.3s ease;
+        }
+        .sidebar .nav-item .nav-link.active {
+            width: 12rem !important;
+        }
+        .sidebar-brand {
+            width: 12rem !important;
+            transition: width 0.3s ease;
+        }
+        .sidebar.toggled {
+            width: 4.5rem !important;
+        }
+        .sidebar.toggled .nav-item {
+            width: 4.5rem !important;
+        }
+        .sidebar.toggled .nav-item .nav-link {
+            width: 4.5rem !important;
+        }
+        .sidebar.toggled .nav-item .nav-link span {
+            display: none;
+        }
+        .sidebar.toggled .sidebar-brand {
+            width: 4.5rem !important;
+        }
+        .sidebar.toggled .sidebar-brand .sidebar-brand-text {
+            display: none;
+        }
+        .sidebar.toggled .sidebar-heading {
+            display: none;
+        }
+        #content-wrapper {
+            margin-left: 12rem !important;
+            transition: margin-left 0.3s ease;
+        }
+        .sidebar.toggled ~ #content-wrapper {
+            margin-left: 4.5rem !important;
+        }
+
+        /* Bootstrap 5 compatibility fixes */
+        .btn-close {
+            box-sizing: content-box;
+            width: 1em;
+            height: 1em;
+            padding: 0.25em 0.25em;
+            color: #000;
+            background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+            border: 0;
+            border-radius: 0.25rem;
+            opacity: .5;
+        }
+
+        .dropdown-toggle::after {
+            display: inline-block;
+            margin-left: 0.255em;
+            vertical-align: 0.255em;
+            content: "";
+            border-top: 0.3em solid;
+            border-right: 0.3em solid transparent;
+            border-bottom: 0;
+            border-left: 0.3em solid transparent;
+        }
+
+        /* 修改顶部导航栏高度 */
+        .topbar {
+            height: 3rem !important;  /* 减小导航栏高度 */
+            padding: 0.5rem 1rem !important;
+        }
+        /* 增大用户名字体 */
+        .navbar-nav .text-gray-600 {
+            font-size: 1.1rem !important;  /* 增大用户名字体 */
+            font-weight: 500 !important;  /* 加粗用户名 */
+        }
+        /* 调整头像大小 */
+        .img-profile {
+            width: 28px !important;
+            height: 28px !important;
+        }
+        /* 调整下拉菜单位置 */
+        .dropdown-menu {
+            margin-top: 0.5rem !important;
+        }
+        /* 调整导航栏阴影 */
+        .topbar.shadow {
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1) !important;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body id="page-top">
+
+    <div id="wrapper">
+
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar" style="position: fixed; height: 100%; width: 12rem; background-color: #1e3a8a !important;">
+
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ url_for('admin_dashboard') }}">
+                <div class="sidebar-brand-icon">
+                    <i class="fas fa-cloud-sun-rain"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">天气数据可视化系统</div>
+            </a>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>仪表盘</span>
+                </a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                数据管理
+            </div>
+
+            <!-- Nav Item - Weather Data -->
+            <li class="nav-item {% if request.endpoint == 'admin_weather_data' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('admin_weather_data') }}">
+                    <i class="fas fa-fw fa-cloud"></i>
+                    <span>天气数据</span>
+                </a>
+            </li>
+
+            <!-- Nav Item - Cities -->
+            <li class="nav-item {% if request.endpoint == 'admin_cities' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('admin_cities') }}">
+                    <i class="fas fa-fw fa-city"></i>
+                    <span>城市管理</span>
+                </a>
+            </li>
+
+            <!-- Nav Item - Prediction Models -->
+            <li class="nav-item {% if request.endpoint == 'admin_prediction_models' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('admin_prediction_models') }}">
+                    <i class="fas fa-fw fa-chart-line"></i>
+                    <span>预测模型</span>
+                </a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                系统管理
+            </div>
+
+            <!-- Nav Item - Users -->
+            <li class="nav-item {% if request.endpoint == 'admin_users' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('admin_users') }}">
+                    <i class="fas fa-fw fa-users"></i>
+                    <span>用户管理</span>
+                </a>
+            </li>
+
+            <!-- Nav Item - Feedback -->
+            <li class="nav-item {% if request.endpoint == 'admin_feedback' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('admin_feedback') }}">
+                    <i class="fas fa-fw fa-comments"></i>
+                    <span>用户反馈</span>
+                </a>
+            </li>
+
+            <!-- Nav Item - System Settings -->
+            <li class="nav-item {% if request.endpoint == 'admin_system' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('admin_system') }}">
+                    <i class="fas fa-fw fa-cog"></i>
+                    <span>系统设置</span>
+                </a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block">
+
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+        </ul>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column" style="margin-left: 12rem;">
+            <!-- Main Content -->
+            <div id="content">
+                <!-- Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                    <!-- Sidebar Toggle (Topbar) -->
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                    <!-- Topbar Navbar -->
+                    <ul class="navbar-nav ml-auto">
+                        <!-- Nav Item - User Information -->
+                        <li class="nav-item dropdown no-arrow">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ current_user.username }}</span>
+                                {% if current_user.avatar_file %}
+                                    <img class="img-profile rounded-circle" src="{{ url_for('static', filename='images/avatars/' + current_user.avatar_file) }}" alt="用户头像" style="width: 32px; height: 32px; object-fit: cover;">
+                                {% else %}
+                                    <img class="img-profile rounded-circle" src="{{ url_for('static', filename='img/undraw_profile.svg') }}" alt="默认头像" style="width: 32px; height: 32px;">
+                                {% endif %}
+                            </a>
+                            <!-- Dropdown - User Information -->
+                            <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    个人资料（回到前端）
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ url_for('admin_logout') }}">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    退出登录
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </nav>
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    {% block content %}{% endblock %}
+                </div>
+                <!-- /.container-fluid -->
+            </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; 天气系统 2024</span>
+                    </div>
+                </div>
+            </footer>
+            <!-- End of Footer -->
+        </div>
+        <!-- End of Content Wrapper -->
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+
+    <script src="{{ url_for('static', filename='jquery/jquery-3.6.0.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap/bootstrap.bundle.min.js') }}"></script>
+    <script>
+    // 侧边栏切换
+    document.getElementById('sidebarToggle').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.body.classList.toggle('sidebar-toggled');
+        document.querySelector('.sidebar').classList.toggle('toggled');
+    });
+
+    // 小屏幕下的侧边栏切换
+    document.getElementById('sidebarToggleTop').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelector('.sidebar').classList.toggle('toggled');
+    });
+
+    // 自动关闭 Flash 消息
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.alert:not(.persistent-alert)');
+        alerts.forEach(function(alert) {
+            setTimeout(function() {
+                const closeButton = alert.querySelector('.btn-close');
+                if (closeButton) {
+                    closeButton.click();
+                }
+            }, 10000);
+        });
+    });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

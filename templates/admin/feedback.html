@@ -1,0 +1,66 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}用户反馈 - 天气系统管理后台{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+{% endblock %}
+
+{% block content %}
+    <h2>用户反馈</h2>
+    <hr>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>用户</th>
+                <th>类型</th>
+                <th>内容</th>
+                <th>联系方式</th>
+                <th>时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for feedback in feedbacks %}
+                <tr>
+                    <td>{{ feedback.id }}</td>
+                    <td>
+                        {% if user_dict[feedback.id] %}
+                            {{ user_dict[feedback.id].username }}
+                        {% else %}
+                            匿名用户
+                        {% endif %}
+                    </td>
+                    <td>{{ feedback.feedback_type }}</td>
+                    <td>{{ feedback.content }}</td>
+                    <td>{{ feedback.contact or '无' }}</td>
+                    <td>{{ feedback.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('delete_feedback', feedback_id=feedback.id) }}">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除此反馈吗？')">删除</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取所有flash消息
+            var flashMessages = document.querySelectorAll('.alert');
+
+            // 为每个flash消息设置自动关闭定时器
+            flashMessages.forEach(function(message) {
+                // 3秒后开始关闭动画
+                setTimeout(function() {
+                    // 创建Bootstrap alert对象并关闭
+                    var bsAlert = new bootstrap.Alert(message);
+                    bsAlert.close();
+                }, 3000);
+            });
+        });
+    </script>
+{% endblock %}
