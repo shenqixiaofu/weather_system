@@ -8,7 +8,7 @@ class SystemSetting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     system_name = db.Column(db.String(64), default='天气数据管理系统')  # 系统名称
     records_per_page = db.Column(db.Integer, default=10)  # 每页显示记录数
-    system_version = db.Column(db.String(10), default='1.1.5')  # 系统版本号,新增
+    system_version = db.Column(db.String(10), default='1.1.5')  # 系统版本号
     system_logo = db.Column(db.String(255))  # 系统 Logo 文件名
     enable_email_notifications = db.Column(db.Boolean, default=False)  # 是否启用邮件
     smtp_server = db.Column(db.String(128))  # 邮件服务器

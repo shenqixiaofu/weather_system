@@ -3,11 +3,10 @@
 {% block head %}
 {{ super() }}
 <style>
-    /* 模态框样式 */
     .modal-dialog {
         overflow-y: auto;
         margin: 1.75rem auto;
-        max-width: 800px;  /* 增加模态框宽度 */
+        max-width: 800px;
     }
 
     .modal-backdrop {
@@ -36,13 +35,12 @@
         width: 100%;
         height: 400px;
         margin: 0 auto;
-        position: relative;  /* 添加相对定位 */
+        position: relative;
     }
 </style>
 {% endblock %}
 
 {% block extra_js %}
-<!-- 使用绝对路径加载 ECharts -->
 <script src="{{ url_for('static', filename='echart/echarts.min.js') }}"></script>
 <script>
     let myChart = null;  // 声明全局变量

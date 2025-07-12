@@ -1,4 +1,5 @@
 # spider/data_cleaner.py
+
 import os
 import json
 import pandas as pd
@@ -74,21 +75,21 @@ class DataCleaner:
             df = pd.read_sql_table('historical_weather_v1', self.engine)
 
             # 执行清洗步骤
-            df = self.clean_dates(df)
-            df = self.clean_temperature(df)
-            df = self.process_weather(df)
+            df = self.clean_dates(df)   # 日期处理
+            df = self.clean_temperature(df) # 温度处理
+            df = self.process_weather(df) # 天气状况处理
 
             # 最终去重
             df = df.sort_values(
                 ['city_code', 'date', 'created_at'],
-                ascending=[True, True, False]
+                ascending=[True, True, False]    # 排序
             ).drop_duplicates(
                 subset=['city_code', 'date'],
-                keep='first'
+                keep='first'     # 保留第一个
             ).reset_index(drop=True)
 
-            if 'id' in df.columns:
-                df = df.drop(columns=['id'])
+            if 'id' in df.columns:  # 如果存在id列
+                df = df.drop(columns=['id'])  # 删除id列
 
             # 使用事务处理删除和插入
             with self.engine.begin() as conn:  # 使用 begin 开启事务

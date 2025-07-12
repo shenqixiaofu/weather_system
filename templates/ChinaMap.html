@@ -24,6 +24,7 @@
                             </h5>
                             <p class="text-secondary mb-0 mt-1 small">探索全国各省市的实时温度数据</p>
                         </div>
+                        <!-- 实时时间 !-->
                         <div class="d-none d-md-block">
                             <span id="current-time" class="text-secondary small"></span>
                         </div>
@@ -32,7 +33,6 @@
 
                 <div class="card-body p-0 position-relative">
                     <div id="map-container" class="map-container" style="width: 100%; height: 78vh;"></div>
-
                     <div id="weather-detail" class="position-absolute top-0 end-0 m-3 p-3 weather-info-panel rounded shadow-sm d-none">
                         <h6 id="province-name" class="border-bottom pb-2"></h6>
                         <div id="weather-data" class="py-2"></div>
@@ -81,42 +81,4 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/map.js') }}"></script>
-<script>
-    // 显示当前时间
-    function updateClock() {
-        const now = new Date();
-        const options = {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        };
-        document.getElementById('current-time').textContent = now.toLocaleDateString('zh-CN', options);
-    }
-
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // 刷新按钮事件
-    document.getElementById('refresh-btn').addEventListener('click', function() {
-        this.disabled = true;
-        this.innerHTML = '<i class="fas fa-circle-notch fa-spin me-1"></i>刷新中...';
-
-        initMap().then(() => {
-            this.disabled = false;
-            this.innerHTML = '<i class="fas fa-sync-alt me-1"></i>刷新数据';
-
-            const now = new Date();
-            const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
-            document.getElementById('last-updated').textContent = now.toLocaleTimeString('zh-CN', options);
-        });
-    });
-
-    // 图例切换按钮
-    document.getElementById('legend-btn').addEventListener('click', function() {
-        toggleLegend();
-    });
-</script>
 {% endblock %}

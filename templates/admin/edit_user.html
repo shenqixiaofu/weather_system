@@ -31,11 +31,23 @@
             </div>
             <div class="mb-3">
                 <label for="location" class="form-label">位置</label>
-                <input type="text" class="form-control" id="location" name="location" value="{{ user.location }}">
+                <select class="form-control" id="location" name="location">
+                    <option value="" {% if not user.location %}selected{% endif %}>选择地区</option>
+                    <option value="大陆地区" {% if user.location == '大陆地区' %}selected{% endif %}>大陆地区</option>
+                    <option value="港澳台地区" {% if user.location == '港澳台地区' %}selected{% endif %}>港澳台地区</option>
+                    <option value="海外" {% if user.location == '海外' %}selected{% endif %}>海外</option>
+                </select>
             </div>
             <div class="mb-3">
                 <label for="occupation" class="form-label">职业</label>
-                <input type="text" class="form-control" id="occupation" name="occupation" value="{{ user.occupation }}">
+                <select class="form-control" id="occupation" name="occupation">
+                    <option value="" {% if not user.occupation %}selected{% endif %}>选择职业</option>
+                    <option value="气象工作者" {% if user.occupation == '气象工作者' %}selected{% endif %}>气象工作者</option>
+                    <option value="研究人员" {% if user.occupation == '研究人员' %}selected{% endif %}>研究人员</option>
+                    <option value="学生" {% if user.occupation == '学生' %}selected{% endif %}>学生</option>
+                    <option value="教师" {% if user.occupation == '教师' %}selected{% endif %}>教师</option>
+                    <option value="其他" {% if user.occupation == '其他' %}selected{% endif %}>其他</option>
+                </select>
             </div>
             <div class="mb-3">
                 <label for="avatar_file" class="form-label">头像</label>

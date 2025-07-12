@@ -47,7 +47,8 @@
                     <i class="fas fa-database"></i> 数据管理
                 </a>
                 <hr>
-                {% if current_user.is_admin %}  <!-- 仅当用户是管理员时显示 -->
+                <!-- 仅当用户是管理员时显示 -->
+                {% if current_user.is_admin %}
                 <a href="{{ url_for('admin_dashboard') }}" class="settings-nav-link">
                     <i class="fas fa-tachometer-alt"></i> 管理员面板
                 </a>
@@ -96,7 +97,13 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="phone" class="form-label">手机号码</label>
-                                <input type="tel" class="form-control" id="phone" name="phone" value="{{ current_user.phone if current_user.phone else '' }}">
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="phone" 
+                                       name="phone" 
+                                       pattern="^1[3-9]\d{9}$"
+                                       maxlength="11"
+                                       value="{{ current_user.phone if current_user.phone else '' }}">
                             </div>
                         </div>
                     </div>
@@ -121,7 +128,6 @@
                                     <option value="研究人员" {{ 'selected' if current_user.occupation == '研究人员' else '' }}>研究人员</option>
                                     <option value="学生" {{ 'selected' if current_user.occupation == '学生' else '' }}>学生</option>
                                     <option value="教师" {{ 'selected' if current_user.occupation == '教师' else '' }}>教师</option>
-                                    <option value="教师" {{ 'selected' if current_user.occupation == '富摩' else '' }}>教师</option>
                                     <option value="其他" {{ 'selected' if current_user.occupation == '其他' else '' }}>其他</option>
                                 </select>
                             </div>
@@ -158,18 +164,6 @@
                         </button>
                     </div>
                     <div class="text-password">••••••••</div>
-                </div>
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <h6 class="mb-0">双因素认证</h6>
-                            <p class="text-muted mb-0 small">提高账号安全性</p>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="twoFactorSwitch" {{ 'checked' if current_user.two_factor_enabled else '' }}>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
                 </div>
                 <div class="alert alert-info" role="alert" id="securityAlert">
                     <div class="d-flex">
@@ -273,7 +267,7 @@
                         <i class="fas fa-cog me-1"></i>管理收藏
                     </button>
                 </div>
-                <div class="alert alert-danger" role="alert">
+                <div class="alert alert-danger" role="alert" id="securityAlert">
                     <div class="d-flex">
                         <div class="me-3">
                             <i class="fas fa-exclamation-triangle fa-lg"></i>
@@ -330,29 +324,28 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteAccountModalLabel">删除账号确认</h5>
+                <h5 class="modal-title w-100 text-center" id="deleteAccountModalLabel">删除账号确认</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="alert alert-danger">
+            <div class="modal-body d-flex flex-column align-items-center justify-content-center text-center">
+                <div class="alert alert-danger w-100" id="securityAlert">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     请确认您真的要删除您的账号。此操作无法撤销，所有与您账号相关的数据将被永久删除。
                 </div>
-                <form id="delete-account-form" action="#" method="POST">
+                <form id="delete-account-form" action="#" method="POST" class="w-75 mx-auto">
                     <div class="mb-3">
                         <label for="deleteConfirmPassword" class="form-label">请输入您的密码以确认</label>
-                        <input type="password" class="form-control" id="deleteConfirmPassword" name="password" required>
+                        <input type="password" class="form-control text-center" id="deleteConfirmPassword" name="password" required>
                     </div>
-                    <div class="form-check mb-3">
+                    <div class="form-check mb-3 d-flex justify-content-center">
                         <input class="form-check-input" type="checkbox" id="confirmDelete" name="confirmDelete" required>
-                        <label class="form-check-label" for="confirmDelete">
+                        <label class="form-check-label ms-2" for="confirmDelete">
                             我确认我想要永久删除我的账号和所有相关数据
                         </label>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <div class="modal-footer justify-content-center">
                 <button type="submit" form="delete-account-form" class="btn btn-danger">删除账号</button>
             </div>
         </div>

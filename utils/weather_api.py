@@ -150,18 +150,13 @@ def fetch_weather_forecast(city):
     try:
         response = requests.get(base_url, params=params)
         response.raise_for_status()
-
         print(f"【调试】API请求URL：{response.url}")  # 显示完整请求地址
-        print(f"【调试】API响应状态码：{response.status_code}")  # 添加
+        print(f"【调试】API响应状态码：{response.status_code}")
 
         data = response.json()
-        #print("天气预报响应:", data)
         print(f"【调试】原始API响应：{data}")  # 输出完整响应
-
         if data['code'] == '200' and len(data['daily']) >= 7:
-
             print(f"【调试】有效预报数据条数：{len(data.get('daily', []))}")
-
             forecast_days = data['daily'][:7]  # 取前3天
             return [
                 {
@@ -181,8 +176,6 @@ def fetch_weather_forecast(city):
         print(f"预报API请求失败: {str(e)}")
         return None
 
-
-
 """逆地理编码API封装"""
 def reverse_geocode_api(lat, lng):
     try:
@@ -197,19 +190,16 @@ def reverse_geocode_api(lat, lng):
         response = requests.get(url, params=params)
         response.raise_for_status()
         data = response.json()
-
         if data['code'] == '200' and data.get('location'):
             return {
                 'status': 'success',
                 'city': data['location'][0]['adm2'],
                 'id': data['location'][0]['id']
             }
-
         return {
             'status': 'error',
             'message': data.get('message', '未知错误')
         }
-
     except requests.exceptions.RequestException as e:
         return {
             'status': 'error',

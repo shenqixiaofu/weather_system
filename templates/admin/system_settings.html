@@ -123,10 +123,23 @@
         background-color: #f8f9fa;
         border-radius: 0.5rem;
         padding: 1rem;
-        max-height: 300px;
-        overflow-y: auto;
         font-family: monospace;
-        font-size: 0.875rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        max-height: calc(1.5em * 15) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        border: 1px solid #e0e0e0;
+    }
+    .system-logs pre {
+        white-space: pre-wrap !important;
+        word-break: break-all !important;
+        margin: 0 !important;
+        max-height: inherit !important;
+    }
+    
+    .status-table td:first-child, .table td:first-child {
+        white-space: nowrap;
     }
 </style>
 {% endblock %}
@@ -141,12 +154,6 @@
             <button class="nav-link active" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button"
                     role="tab" aria-controls="system" aria-selected="true">
                 <i class="fas fa-cog me-2"></i>基本设置
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button"
-                    role="tab" aria-controls="email" aria-selected="false">
-                <i class="fas fa-envelope me-2"></i>邮件设置
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -202,47 +209,6 @@
                             {% endif %}
                         </div>
                         {{ system_form.submit(class="btn btn-primary") }}
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- 邮件设置 -->
-        <div class="tab-pane fade" id="email" role="tabpanel" aria-labelledby="email-tab">
-            <div class="card">
-                <div class="card-body p-4">
-                    <form method="POST">
-                        {{ email_form.hidden_tag() }}
-                        <input type="hidden" name="form_type" value="email_settings">
-                        <div class="mb-3 form-check form-switch">
-                            {{ email_form.enable_email_notifications(class="form-check-input") }}
-                            {{ email_form.enable_email_notifications.label(class="form-check-label") }}
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                {{ email_form.smtp_server.label(class="form-label") }}
-                                {{ email_form.smtp_server(class="form-control") }}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                {{ email_form.smtp_port.label(class="form-label") }}
-                                {{ email_form.smtp_port(class="form-control") }}
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                {{ email_form.sender_email.label(class="form-label") }}
-                                {{ email_form.sender_email(class="form-control") }}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                {{ email_form.smtp_password.label(class="form-label") }}
-                                {{ email_form.smtp_password(class="form-control") }}
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            {{ email_form.email_encryption.label(class="form-label") }}
-                            {{ email_form.email_encryption(class="form-select") }}
-                        </div>
-                        {{ email_form.submit(class="btn btn-primary") }}
                     </form>
                 </div>
             </div>
@@ -314,6 +280,42 @@
         <!-- 系统状态 -->
         <div class="tab-pane fade" id="status" role="tabpanel" aria-labelledby="status-tab">
             <div class="row">
+                <!-- 系统基本信息 -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>系统信息</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table">
+                                <tbody>
+                                <tr>
+                                    <td>Python版本</td>
+                                    <td class="status-value">{{ status.system_info.python_version }}</td>
+                                </tr>
+                                <tr>
+                                    <td>操作系统</td>
+                                    <td class="status-value">{{ status.system_info.platform }}</td>
+                                </tr>
+                                <tr>
+                                    <td>内存使用</td>
+                                    <td class="status-value">{{ "%.2f"|format(status.system_info.memory_usage) }} MB</td>
+                                </tr>
+                                <tr>
+                                    <td>CPU使用率</td>
+                                    <td class="status-value">{{ status.system_info.cpu_usage }}%</td>
+                                </tr>
+                                <tr>
+                                    <td>磁盘使用率</td>
+                                    <td class="status-value">{{ status.system_info.disk_usage }}%</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据库状态 -->
                 <div class="col-md-6">
                     <div class="card mb-4">
                         <div class="card-header">
@@ -340,39 +342,22 @@
                                 </tr>
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>模型状态</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <p class="mb-1">已训练模型数量:</p>
-                                <h4 class="status-value">{{ status.trained_models }}</h4>
-                            </div>
-                            <div class="mb-3">
-                                <p class="mb-1">模型存储路径:</p>
-                                <code class="bg-light p-2 rounded d-block">{{ predictor.model_path }}</code>
-                            </div>
-                            <div class="mt-4">
-                                <h6 class="mb-3">系统操作</h6>
-                                <div class="d-flex gap-3">
-                                    <a href="{{ url_for('admin_clear_cache') }}" class="btn btn-warning btn-sm flex-grow-1"
-                                       onclick="return confirm('确定要清除缓存数据吗？')">
-                                        <i class="fas fa-trash me-1"></i>清除缓存
-                                    </a>
-                                    <a href="{{ url_for('admin_update_provinces') }}" class="btn btn-info btn-sm flex-grow-1">
-                                        <i class="fas fa-sync me-1"></i>更新省份数据
-                                    </a>
-                                </div>
+                            <!-- 操作按钮 居中 -->
+                            <div class="d-flex justify-content-center gap-3 mt-4">
+                                <a href="{{ url_for('admin_clear_cache') }}" class="btn btn-warning btn-sm"
+                                   onclick="return confirm('确定要清除缓存数据吗？')">
+                                    <i class="fas fa-trash me-1"></i>清除缓存
+                                </a>
+                                <a href="{{ url_for('admin_update_provinces') }}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-sync me-1"></i>更新省份数据
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- 系统日志 -->
             <div class="row">
                 <div class="col-12">
                     <div class="card">
@@ -381,7 +366,7 @@
                         </div>
                         <div class="card-body">
                             <div class="system-logs">
-                                <pre>{{ system_logs }}</pre>
+                                <pre style="max-height: calc(1.5em * 15); overflow-y: auto; overflow-x: hidden; white-space: pre-wrap; word-break: break-all; margin: 0;">{{ system_logs }}</pre>
                             </div>
                         </div>
                     </div>

@@ -13,7 +13,7 @@ const provinceData = {
     "陕西": ["西安", "咸阳", "延安", "榆林", "渭南", "商洛", "安康", "汉中", "宝鸡", "铜川", "杨凌"],
     "山东": ["济南", "青岛", "淄博", "德州", "烟台", "潍坊", "济宁", "泰安", "临沂", "菏泽", "滨州", "东营", "威海", "枣庄", "日照", "莱芜", "聊城"],
     "新疆": ["乌鲁木齐", "克拉玛依", "石河子", "昌吉", "吐鲁番", "巴州", "阿拉尔", "阿克苏", "喀什", "伊犁", "塔城", "哈密", "和田", "阿勒泰", "克州", "博州"],
-    "西藏": ["**", "日喀则", "山南", "林芝", "昌都", "那曲", "阿里"],
+    "西藏": ["拉萨", "日喀则", "山南", "林芝", "昌都", "那曲", "阿里"],
     "青海": ["西宁", "海东", "黄南", "海南", "果洛", "玉树", "海西", "海北"],
     "甘肃": ["兰州", "定西", "平凉", "庆阳", "武威", "金昌", "张掖", "酒泉", "天水", "陇南", "临夏", "甘南", "白银", "嘉峪关"],
     "宁夏": ["银川", "石嘴山", "吴忠", "固原", "中卫"],
@@ -22,21 +22,21 @@ const provinceData = {
     "湖北": ["武汉", "襄阳", "鄂州", "孝感", "黄冈", "黄石", "咸宁", "荆州", "宜昌", "恩施", "十堰", "神农架", "随州", "荆门", "天门", "仙桃", "潜江"],
     "浙江": ["杭州", "湖州", "嘉兴", "宁波", "绍兴", "台州", "温州", "丽水", "金华", "衢州", "舟山"],
     "安徽": ["合肥", "蚌埠", "芜湖", "淮南", "马鞍山", "安庆", "宿州", "阜阳", "亳州", "黄山", "滁州", "淮北", "铜陵", "宣城", "六安", "池州"],
-    "福建": ["福州", "厦门", "宁德", "莆田", "泉州", "漳州", "龙岩", "三明", "南平", "***"],
+    "福建": ["福州", "厦门", "宁德", "莆田", "泉州", "漳州", "龙岩", "三明", "南平", "钓鱼岛"],
     "江西": ["南昌", "九江", "上饶", "抚州", "宜春", "吉安", "赣州", "景德镇", "萍乡", "新余", "鹰潭"],
     "湖南": ["长沙", "湘潭", "株洲", "衡阳", "郴州", "常德", "益阳", "娄底", "邵阳", "岳阳", "张家界", "怀化", "永州", "湘西"],
     "贵州": ["贵阳", "遵义", "安顺", "黔南", "黔东南", "铜仁", "毕节", "六盘水", "黔西南"],
     "四川": ["成都", "攀枝花", "自贡", "绵阳", "南充", "达州", "遂宁", "广安", "巴中", "泸州", "宜宾", "内江", "资阳", "乐山", "眉山", "凉山", "雅安", "甘孜", "阿坝", "德阳", "广元"],
     "广东": ["广州", "韶关", "惠州", "梅州", "汕头", "深圳", "珠海", "佛山", "肇庆", "湛江", "江门", "河源", "清远", "云浮", "潮州", "东莞", "中山", "阳江", "揭阳", "茂名", "汕尾"],
     "云南": ["昆明", "大理", "红河", "曲靖", "保山", "文山", "玉溪", "楚雄", "普洱", "昭通", "临沧", "怒江", "迪庆", "丽江", "德宏", "西双版纳"],
-    "广西": ["南宁", "崇左", "柳州", "来宾", "桂林", "梧州", "贺州", "贵港", "玉林", "百色", "钦州", "河池", "北海", "防城港"],
+    "广西": ["南宁", "桂林", "柳州", "来宾", "崇左", "梧州", "贺州", "贵港", "玉林", "百色", "钦州", "河池", "北海", "防城港"],
     "海南": ["海口", "三亚", "三沙"],
     "香港": ["香港"],
     "澳门": ["澳门"],
     "台湾": ["台北", "高雄", "台中"]
 };
 
-// 初始化省份下拉框 (使用 Bootstrap 的样式)
+// 初始化省份下拉框
 const provinceSelect = document.getElementById('provinceSelect');
 Object.keys(provinceData).forEach(province => {
     const option = document.createElement('option');
@@ -45,7 +45,7 @@ Object.keys(provinceData).forEach(province => {
     provinceSelect.appendChild(option);
 });
 
-// 省份选择变化事件 (使用 Bootstrap 的样式)
+// 省份选择变化事件
 provinceSelect.addEventListener('change', function () {
     const citySelect = document.getElementById('citySelect');
     citySelect.innerHTML = '<option value="">请选择城市</option>';
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// 显示加载动画 (使用 Bootstrap 的 class)
+// 显示加载动画
 function showLoader() {
     document.getElementById('loader').style.display = 'block';
     document.getElementById('prediction-metrics').style.display = 'none';
@@ -107,7 +107,7 @@ function loadPrediction() {
         .then(data => {
             hideLoader();
             if (data.status === 'success') {
-                displayPrediction(data.predictions, city);
+                displayPrediction(data.predictions, city, data.accuracy);
             } else {
                 alert(`获取预测失败: ${data.message}`);
             }
@@ -120,7 +120,7 @@ function loadPrediction() {
 }
 
 // 显示预测结果
-function displayPrediction(predictions, cityName) {
+function displayPrediction(predictions, cityName, accuracy) {
     // 显示预测指标和表格区域
     document.getElementById('prediction-metrics').style.display = 'flex';
     document.getElementById('tableSection').style.display = 'block';
@@ -133,11 +133,17 @@ function displayPrediction(predictions, cityName) {
     const maxTemp = Math.max(...maxTemps).toFixed(1);
     const minTemp = Math.min(...minTemps).toFixed(1);
 
-    // 更新统计指标显示 (使用 Bootstrap 的 class)
+    // 更新统计指标显示
     document.getElementById('avg-high').textContent = avgHigh + '°C';
     document.getElementById('avg-low').textContent = avgLow + '°C';
     document.getElementById('max-temp').textContent = maxTemp + '°C';
     document.getElementById('min-temp').textContent = minTemp + '°C';
+
+    // 更新模型评估指标的数值
+    if (accuracy) {
+        document.getElementById('mae-value').textContent = `${accuracy.mae.toFixed(1)}°C`;
+        document.getElementById('rmse-value').textContent = `${accuracy.rmse.toFixed(1)}°C`;
+    }
 
     // 更新表格内容
     let tbody = '';
@@ -194,17 +200,17 @@ function displayPrediction(predictions, cityName) {
             }
         },
         legend: {
-            data: ['预测最高温度', '预测最低温度', '平均温度'], // 包含平均温度
+            data: ['预测最高温度', '预测最低温度'],
             top: 30,
             textStyle: {
                 color: '#555',
-                fontSize: 14 // 增大图例字号
+                fontSize: 14
             }
         },
         grid: {
-            left: '5%', // 增大左边距
-            right: '5%', // 增大右边距
-            bottom: '8%', // 增大底边距
+            left: '5%',
+            right: '5%',
+            bottom: '8%',
             containLabel: true
         },
         xAxis: {
@@ -219,7 +225,7 @@ function displayPrediction(predictions, cityName) {
             axisLabel: {
                 color: '#666',
                 rotate: predictions.dates.length > 10 ? 45 : 0,
-                fontSize: 12 // 调整x轴标签字号
+                fontSize: 12
             }
         },
         yAxis: {
@@ -227,7 +233,7 @@ function displayPrediction(predictions, cityName) {
             name: '温度 (°C)',
             nameTextStyle: {
                 color: '#666',
-                fontSize: 14 // 增大y轴名称字号
+                fontSize: 14
             },
             axisLine: {
                 lineStyle: {
@@ -242,7 +248,7 @@ function displayPrediction(predictions, cityName) {
             },
             axisLabel: {
                 color: '#666',
-                fontSize: 12 // 调整y轴标签字号
+                fontSize: 12
             }
         },
         series: [
@@ -287,85 +293,7 @@ function displayPrediction(predictions, cityName) {
                         { offset: 1, color: 'rgba(30, 136, 229, 0.1)' }
                     ])
                 }
-            },
-              {
-                name: '最高温度置信区间',
-                type: 'line',
-                data: predictions.temp_max_upper,
-                stack: 'confidence-max',
-                lineStyle: {
-                    color: 'transparent'
-                },
-                  itemStyle:{
-                    color: 'transparent'
-                },
-                areaStyle: {
-                    color: 'rgba(230, 81, 0, 0.2)'
-                },
-
-            },
-            {
-                name: '最低温度置信区间',
-                type: 'line',
-                data: predictions.temp_min_lower,
-                stack: 'confidence-min',
-                lineStyle: {
-                    color: 'transparent'
-                },
-                 itemStyle:{
-                    color: 'transparent'
-                },
-                areaStyle: {
-                    color: 'rgba(30, 136, 229, 0.2)'
-                }
-            },
-             {
-                name: '最高温度置信区间_lower',
-                type: 'line',
-                data: predictions.temp_max_lower,
-                stack: 'confidence-max',
-                lineStyle: {
-                    color: 'transparent'
-                },
-                 itemStyle:{
-                    color: 'transparent'
-                },
-                areaStyle: {
-                    color: 'transparent'
-                },
-
-            },
-               {
-                name: '最低温度置信区间_lower',
-                type: 'line',
-                data: predictions.temp_min_upper,
-                stack: 'confidence-min',
-                lineStyle: {
-                    color: 'transparent'
-                },
-                   itemStyle:{
-                    color: 'transparent'
-                },
-                areaStyle: {
-                  color: 'transparent'
-                }
-            },
-             {
-                name: '历史最高',
-                type: 'line',
-                markLine: {
-                    data: [
-                        { yAxis: 35, name: '历史最高' }
-                    ],
-                     lineStyle: {
-                        color: 'red',
-                        type: 'dotted'
-                    },
-                      label:{
-                      formatter: '{b}: {c}°C'
-                    }
-                }
-            },
+            }
         ]
     };
 
@@ -491,19 +419,8 @@ function displayPrediction(predictions, cityName) {
         ]
     };
     temperatureRangeChart.setOption(rangeOption);
-}
 
-// 模拟数据示例 (当 API 不可用时使用)
-function loadDemoData() {
-    const demoData = {
-        status: 'success',
-        predictions: {
-            dates: ['2025-03-04', '2025-03-05', '2025-03-06', '2025-03-07', '2025-03-08', '2025-03-09', '2025-03-10'],
-            temp_max: [1, 2, 3, 4, 5, 6, 7],
-            temp_min: [-1, -2, -3, -4, -5, -6, -7]
-        }
-    };
-    displayPrediction(demoData.predictions, '北京');
+
 }
 
 // 在脚本加载完毕后添加一个快速测试按钮 (只在开发环境下显示)
@@ -523,7 +440,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// 添加导出数据功能 (使用 Bootstrap 样式)
+// 添加导出数据功能
 document.addEventListener('click', function (e) {
     if (e.target.closest('.btn-outline-info')) { // 修改按钮选择器
         exportTableData();

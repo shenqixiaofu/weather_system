@@ -51,14 +51,17 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* 防止出现滚动条 */
+    overflow: hidden;
 }
 
 /* map-container 的样式 */
 #map-container {
     width: 100%;
-    height: 100%;  /* 或者一个固定的高度, 例如 600px, 根据你的布局来定 */
-    /* 其他样式 */
+    height: 78vh;
+    min-height: 500px;
+    position: relative;
+    overflow: hidden;
+    transition: width 0.3s, height 0.3s;
 }
 
 /* 全屏时的样式 (使用 :fullscreen 伪类) */

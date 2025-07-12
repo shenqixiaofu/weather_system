@@ -86,8 +86,8 @@
                     <td class="text-center">{{ item.weather }}</td>
                     <td class="text-center">{{ item.wind_dir }}</td>
                     <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-primary" data-toggle="modal"
-                                data-target="#editDataModal{{ item.id }}">
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#editDataModal{{ item.id }}">
                             编辑
                         </button>
                         <button type="button" class="btn btn-sm btn-danger"
@@ -103,9 +103,7 @@
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">编辑天气数据</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form action="{{ url_for('admin_edit_weather_data', id=item.id) }}" method="post">
                                 <div class="modal-body">
@@ -142,8 +140,7 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消
-                                    </button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                                     <button type="submit" class="btn btn-primary">保存</button>
                                 </div>
                             </form>
@@ -164,47 +161,50 @@
                        href="{{ url_for('admin_weather_data', page=page-1, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">上一页</a>
                 </li>
 
-                <!-- 第一页 -->
-                {% if page > 3 %}
-                <li class="page-item">
-                    <a class="page-link"
-                       href="{{ url_for('admin_weather_data', page=1, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">1</a>
-                </li>
-                <!-- 省略号 -->
-                {% if page > 4 %}
-                <li class="page-item disabled">
-                    <span class="page-link">...</span>
-                </li>
-                {% endif %}
-                {% endif %}
+                <!-- 总页数较少时不显示省略号 -->
+                {% if total_pages <= 7 %}
+                    {% for i in range(1, total_pages + 1) %}
+                        <li class="page-item {{ 'active' if i == page else '' }}">
+                            <a class="page-link"
+                               href="{{ url_for('admin_weather_data', page=i, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">{{ i }}</a>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <!-- 第一页 -->
+                    {% if page > 3 %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="{{ url_for('admin_weather_data', page=1, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">1</a>
+                        </li>
+                        {% if page > 4 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endif %}
 
-                <!-- 计算起始页和结束页 -->
-                {% set start_page = page - 2 if page - 2 > 0 else 1 %}
-                {% set end_page = page + 4 if page + 4 < total_pages else total_pages %}  {# 修改为向后显示4页 #}
+                    <!-- 当前页前后页码 -->
+                    {% set start_page = page - 2 if page - 2 > 0 else 1 %}
+                    {% set end_page = page + 2 if page + 2 < total_pages else total_pages %}
+                    {% for i in range(start_page, end_page + 1) %}
+                        <li class="page-item {{ 'active' if i == page else '' }}">
+                            <a class="page-link"
+                               href="{{ url_for('admin_weather_data', page=i, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">{{ i }}</a>
+                        </li>
+                    {% endfor %}
 
-                <!-- 当前页前后的页码 -->
-                {% for i in range(start_page, end_page + 1) %}
-                <li class="page-item {{ 'active' if i == page else '' }}">
-                    <a class="page-link"
-                       href="{{ url_for('admin_weather_data', page=i, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">{{
-                        i }}</a>
-                </li>
-                {% endfor %}
-
-                <!-- 省略号 -->
-                {% if page < total_pages - 3 %}
-                <li class="page-item disabled">
-                    <span class="page-link">...</span>
-                </li>
-                {% endif %}
-
-                <!-- 最后一页 -->
-                {% if page < total_pages - 2 %}
-                <li class="page-item">
-                    <a class="page-link"
-                       href="{{ url_for('admin_weather_data', page=total_pages, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">{{
-                        total_pages }}</a>
-                </li>
+                    <!-- 省略号和最后一页 -->
+                    {% if page < total_pages - 2 %}
+                        {% if page < total_pages - 3 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="{{ url_for('admin_weather_data', page=total_pages, city=request.args.get('city', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">{{ total_pages }}</a>
+                        </li>
+                    {% endif %}
                 {% endif %}
 
                 <!-- 下一页 -->
@@ -223,9 +223,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">添加天气数据</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ url_for('admin_add_weather_data') }}" method="post">
                 <div class="modal-body">
@@ -255,7 +253,6 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
                     <button type="submit" class="btn btn-primary">添加</button>
                 </div>
             </form>

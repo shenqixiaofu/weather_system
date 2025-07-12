@@ -8,7 +8,6 @@ import shutil
 import time
 from collections import Counter
 import re
-
 import numpy as np
 import pandas as pd
 import logging
@@ -29,6 +28,7 @@ from models.feedback_models import Feedback
 from models.weather_models import db, WeatherData, WeatherForecast, HourlyForecast, RegionTemperature
 from models.historical_models import HistoricalWeather
 from config import Config
+from models.systemsetting_models import SystemSetting
 from spider.province_data import province_data
 from spider.weather_spider import batch_crawl, CITY_INFO
 from static.form.forms import SystemSettingsForm, EmailSettingsForm, DatabaseBackupForm, AutoBackupForm
@@ -44,6 +44,10 @@ from utils.weather_predictor import WeatherPredictor
 from apscheduler.triggers.interval import IntervalTrigger
 from flask import Flask, request, current_app
 from flask_babel import Babel
+import uuid
+import sys
+import platform
+import psutil
 
 
 app = Flask(__name__, static_folder='static')
@@ -62,9 +66,8 @@ login_manager.login_view = 'login'
 log_folder = 'logs'
 if not os.path.exists(log_folder):
     os.makedirs(log_folder)
-
-log_file = os.path.join(log_folder, 'app_new.log')
-handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=5)
+log_file = os.path.join(log_folder, 'app.log')
+handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=5, delay=True)
 handler.setFormatter(logging.Formatter(
     '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
 ))
@@ -73,6 +76,20 @@ app.logger.addHandler(handler)
 app.logger.setLevel(logging.INFO)
 app.logger.info('天气系统启动')
 
+# 添加日志记录装饰器
+def log_operation(operation_type):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            try:
+                result = f(*args, **kwargs)
+                app.logger.info(f'[{operation_type}] 操作成功: {f.__name__}')
+                return result
+            except Exception as e:
+                app.logger.error(f'[{operation_type}] 操作失败: {f.__name__}, 错误: {str(e)}')
+                raise
+        return decorated_function
+    return decorator
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -88,8 +105,8 @@ def login():
         password = request.form.get('password', '')
         remember = 'remember' in request.form
 
-        # 输入验证
         if not username or not password:
+            app.logger.warning(f'登录失败: 用户名或密码为空')
             flash('用户名和密码不能为空', 'error')
             return render_template('login.html')
 
@@ -97,10 +114,12 @@ def login():
 
         if user and user.check_password(password):
             login_user(user, remember=remember)
+            app.logger.info(f'用户登录成功: {username}')
             next_page = request.args.get('next')
             flash('登录成功', 'success')
             return redirect(next_page or url_for('index'))
         else:
+            app.logger.warning(f'登录失败: 用户名或密码错误 - {username}')
             flash('用户名或密码错误', 'error')
             return render_template('login.html', username=username)
 
@@ -115,33 +134,55 @@ def register():
         password = request.form['password']
 
         if User.query.filter_by(username=username).first():
-            flash('用户名已存在')
+            app.logger.warning(f'注册失败: 用户名已存在 - {username}')
+            flash(f'用户名 "{username}" 已被注册，请使用其他用户名', 'error')
             return redirect(url_for('register'))
         if request.form['password'] != request.form['confirm_password']:
+            app.logger.warning(f'注册失败: 密码不匹配 - {username}')
             flash('两次输入的密码不匹配')
             return redirect(url_for('register'))
 
-        # 创建新用户
-        new_user = User(
-            username=username,
-            register_date=datetime.now()  # 确保设置注册日期
-        )
-        new_user.set_password(password)
+        try:
+            new_user = User(
+                username=username,
+                    register_date=datetime.now()
+            )
+            new_user.set_password(password)
 
-        db.session.add(new_user)
-        db.session.commit()
+            db.session.add(new_user)
+            db.session.commit()
+            app.logger.info(f'新用户注册成功: {username}')
 
-        login_user(new_user)
-        return redirect(url_for('index'))
+            login_user(new_user)
+            return redirect(url_for('index'))
+        except Exception as e:
+            app.logger.error(f'注册失败: {str(e)}')
+            db.session.rollback()
+            flash('注册失败，请稍后重试')
+            return redirect(url_for('register'))
     return render_template('register.html')
 
 
 @app.route('/logout')
 @login_required
 def logout():
+    # 获取响应对象
+    response = make_response(redirect(url_for('index')))
+    
+    # 清除用户相关的cookie
+    response.delete_cookie('lastSearchedCity')
+    response.delete_cookie('locatedCity')
+    response.delete_cookie('hasLocated')
+    
+    # 先保存用户名
+    username = current_user.username
+    
+    # 执行登出操作
     logout_user()
+    app.logger.info(f'用户退出登录: {username}')
     flash('您已成功退出登录', 'success')
-    return redirect(url_for('index'))
+    
+    return response
 
 
 """@app.cli.command("rebuild-db")
@@ -160,7 +201,18 @@ def rebuild_database_command():
 # 添加favicon路由
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory('static', 'favicon.ico')
+    settings = SystemSetting.query.first()
+    response = None
+    if settings and settings.system_logo:
+        response = send_from_directory('static/images/logos', settings.system_logo)
+    else:
+        response = send_from_directory('static/images/favicons', 'favicon.ico')
+    
+    # 添加缓存控制头
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
 @app.route('/')
@@ -222,7 +274,7 @@ def fetch_weather(city):
             # 检查并获取/更新预报数据
             forecast_data = fetch_weather_forecast(city)
 
-            # 保存数据 (与 /get_weather/<city> 路由中的逻辑相同)
+            # 保存数据
             if hourly_data:
                 HourlyForecast.query.filter_by(city=city_cn).delete()
                 for hour in hourly_data:
@@ -670,28 +722,27 @@ def get_radar_data(city):
 @app.route('/cleaned_historical_weather/<city>')
 def get_cleaned_historical_weather(city):
     with app.app_context():
-        # 查询指定城市的历史天气数据，默认获取最近30天
         thirty_days_ago = datetime.now().date() - timedelta(days=30)
-
-        # 首先尝试查询过去30天的数据
-        historical_data = CleanedHistoricalWeather.query.filter_by(
-            city_name=city
-        ).filter(
+        # 先查最近30天
+        recent_data = CleanedHistoricalWeather.query.filter(
+            CleanedHistoricalWeather.city_name == city,
             CleanedHistoricalWeather.date >= thirty_days_ago
-        ).order_by(
-            CleanedHistoricalWeather.date.desc()
-        ).all()
+        ).order_by(CleanedHistoricalWeather.date.desc()).all()
 
-        # 如果没有过去30天的数据，则获取最新的30条记录
-        if not historical_data:
-            historical_data = CleanedHistoricalWeather.query.filter_by(
-                city_name=city
-            ).order_by(
-                CleanedHistoricalWeather.date.desc()
-            ).limit(30).all()
-            historical_data.reverse()  # 将数据按日期升序排列
+        # 不足30条再补历史
+        if len(recent_data) < 30:
+            extra_needed = 30 - len(recent_data)
+            extra_data = CleanedHistoricalWeather.query.filter(
+                CleanedHistoricalWeather.city_name == city,
+                CleanedHistoricalWeather.date < thirty_days_ago
+            ).order_by(CleanedHistoricalWeather.date.desc()).limit(extra_needed).all()
+            historical_data = recent_data + extra_data
+        else:
+            historical_data = recent_data
 
-        # 将查询结果转换为前端所需的数据格式
+        # 按日期升序排列
+        historical_data = sorted(historical_data, key=lambda r: r.date)
+
         result = []
         for record in historical_data:
             result.append({
@@ -701,20 +752,7 @@ def get_cleaned_historical_weather(city):
                 'text': record.weather,
                 'wind_dir': record.wind_dir
             })
-
-        # 记录用户查询历史天气的活动
-        if current_user.is_authenticated:
-            record_activity(
-                activity_type="view",
-                description=f"查看了{city}的历史天气",
-                icon="fa-history",
-                related_data=f"最近30天数据，共{len(historical_data)}条记录"
-            )
-
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
+        return jsonify({'status': 'success', 'data': result})
 
 
 # 记录搜索历史的辅助函数
@@ -744,9 +782,8 @@ def record_search_activity():
                 related_data=f"城市: {city}"
             )
 
-            # 添加这一行来记录搜索历史
+            # 记录搜索历史
             record_search(city)
-
             return jsonify({'status': 'success'})
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -857,7 +894,7 @@ def fetch_and_cache_provinces_data():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-
+# 更新省份温度数据
 def update_provinces_temperature():
     with app.app_context():
         try:
@@ -1266,12 +1303,6 @@ def update_preference():
         if preference is None or value is None:
             return jsonify({'success': False, 'message': '缺少必要的参数'}), 400
 
-        if preference == 'language':
-            # 添加语言代码验证
-            valid_languages = ['zh_CN', 'en_US']
-            if value not in valid_languages:
-                return jsonify({'success': False, 'message': '不支持的语言'}), 400
-
         # 动态确定 JSON 文件路径
         base_dir = os.path.dirname(os.path.abspath(__file__))
         json_path = os.path.join(base_dir, 'spider', 'old_province_city.json')
@@ -1342,54 +1373,63 @@ def update_preference():
         return jsonify({'success': False, 'message': f'更新失败: {str(e)}'}), 500
 
 
+def validate_phone(phone):
+    """验证手机号格式"""
+    if not phone:  # 允许为空
+        return True
+    import re
+    pattern = r'^1[3-9]\d{9}$'
+    return bool(re.match(pattern, phone))
+
 # 个人设置路由
 @app.route('/profile/settings', methods=['GET', 'POST'])
 @login_required
 def profile_settings():
     if request.method == 'POST':
         try:
-            # 处理头像上传（放在其他字段更新之前）
-            if 'avatar' in request.files:
-                avatar_file = request.files['avatar']
-                if avatar_file and avatar_file.filename and allowed_file(avatar_file.filename):
-                    # 生成唯一文件名
-                    filename = secure_filename(f"avatar_{current_user.id}_{int(time.time())}.jpg")
-                    upload_folder = app.config['UPLOAD_FOLDER']
-                    # 确保目录存在
-                    os.makedirs(upload_folder, exist_ok=True)
-                    # 保存文件
-                    file_path = os.path.join(upload_folder, filename)
-                    avatar_file.save(file_path)
-                    # 删除旧头像（如果存在）
-                    if current_user.avatar_file:
-                        old_file = os.path.join(upload_folder, current_user.avatar_file)
-                        if os.path.exists(old_file):
-                            os.remove(old_file)
-                    # 更新数据库记录
-                    current_user.avatar_file = filename
-
-            # 更新用户基本信息
-            current_user.username = request.form.get('username', current_user.username)
-            current_user.bio = request.form.get('bio', current_user.bio)
-            current_user.email = request.form.get('email', current_user.email)
-            current_user.phone = request.form.get('phone', current_user.phone)
-            current_user.location = request.form.get('location', current_user.location)
-            current_user.occupation = request.form.get('occupation', current_user.occupation)
-
-            # 更新最后更新时间
+            # 获取表单数据
+            username = request.form.get('username', '').strip()
+            email = request.form.get('email', '').strip()
+            phone = request.form.get('phone', '').strip()
+            bio = request.form.get('bio', '').strip()
+            location = request.form.get('location', '').strip()
+            occupation = request.form.get('occupation', '').strip()
+            
+            # 验证手机号
+            if phone and not validate_phone(phone):
+                flash('请输入正确的手机号码格式', 'danger')
+                return redirect(url_for('profile_settings'))
+            
+            # 更新用户信息
+            current_user.username = username
+            current_user.email = email
+            current_user.phone = phone
+            current_user.bio = bio
+            current_user.location = location
+            current_user.occupation = occupation
             current_user.profile_updated_at = datetime.now()
-
-            # 提交数据库更改
+            
+            # 处理头像上传
+            if 'avatar' in request.files:
+                file = request.files['avatar']
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    # 生成唯一文件名
+                    ext = filename.rsplit('.', 1)[1].lower()
+                    new_filename = f"{current_user.id}_{int(time.time())}.{ext}"
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+                    current_user.avatar_file = new_filename
+            
             db.session.commit()
-            flash('个人资料更新成功', 'success')
+            flash('个人资料更新成功！', 'success')
             return redirect(url_for('profile_settings'))
-
+            
         except Exception as e:
             db.session.rollback()
-            app.logger.error(f"更新用户资料失败: {str(e)}", exc_info=True)
-            flash(f'更新失败: {str(e)}', 'danger')
+            app.logger.error(f"更新个人资料失败: {str(e)}")
+            flash('更新失败，请稍后重试', 'danger')
             return redirect(url_for('profile_settings'))
-
+    
     return render_template('profile_settings.html')
 
 
@@ -1421,9 +1461,10 @@ def change_password():
 @login_required
 def clear_search_history():
     try:
-
         # 删除用户的搜索历史
         SearchHistory.query.filter_by(user_id=current_user.id).delete()
+        # 同时删除用户活动表中的搜索记录
+        UserActivity.query.filter_by(user_id=current_user.id, activity_type='search').delete()
         db.session.commit()
 
         # 返回 JSON 响应而不是重定向
@@ -1586,6 +1627,8 @@ def get_weather_data():
     province = request.args.get('province')  # 获取 province 参数
     start = request.args.get('start')
     end = request.args.get('end')
+    page = int(request.args.get('page', 1))
+    size = int(request.args.get('size', 10))
 
     query = CleanedHistoricalWeather.query
 
@@ -1608,18 +1651,22 @@ def get_weather_data():
     elif end:
         query = query.filter(CleanedHistoricalWeather.date <= end)
 
-    # 查询排序和限制 (与之前相同)
-    data = query.order_by(CleanedHistoricalWeather.date.desc()).limit(40).all()
-    print(f"Query returned {len(data)} records")
+    total = query.count()
+    data = query.order_by(CleanedHistoricalWeather.date.desc()) \
+        .offset((page - 1) * size) \
+        .limit(size) \
+        .all()
 
-    # 返回 JSON 数据 (与之前相同)
-    return jsonify([{
-        'city_name': item.city_name,
-        'date': item.date.strftime('%Y-%m-%d'),
-        'temp_max': item.temp_max,
-        'temp_min': item.temp_min,
-        'weather': item.weather
-    } for item in data])
+    return jsonify({
+        'data': [{
+            'city_name': item.city_name,
+            'date': item.date.strftime('%Y-%m-%d'),
+            'temp_max': item.temp_max,
+            'temp_min': item.temp_min,
+            'weather': item.weather
+        } for item in data],
+        'total': total
+    })
 
 
 @app.route('/prediction_view')
@@ -1634,40 +1681,32 @@ def prediction_view():
 # 初始化预测器实例
 predictor = WeatherPredictor(days_to_predict=7)
 
-
+# 模态框中预测天气图表
 @app.route('/predict_weather/<city>')
 def predict_weather(city):
-    """预测指定城市的未来天气（修正类型转换问题）"""
     try:
-        # 运行预测流程
-        predictions = predictor.run_full_pipeline(city, retrain=False)
-
-        # ========== 新增类型转换代码 ==========
+        predictions, metrics = predictor.run_full_pipeline(city, retrain=False)
+        # 格式化预测结果
         def safe_convert(value):
-            """安全类型转换函数"""
             if isinstance(value, (pd.Timestamp, datetime)):
                 return value.strftime('%Y-%m-%d')
-            return float(value) if isinstance(value, (np.generic, float, np.float64)) else value  # 增加 np.float64
-
-        # 深度转换数据类型
+            return float(value) if isinstance(value, (np.generic, float, np.float64)) else value
         formatted_results = {
             'dates': [safe_convert(d) for d in predictions['date'].tolist()],
             'temp_max': [safe_convert(t) for t in predictions['temp_max'].tolist()],
             'temp_min': [safe_convert(t) for t in predictions['temp_min'].tolist()]
         }
-        # ========== 转换结束 ==========
-        # 添加调试日志
-        current_app.logger.debug("接口返回数据示例: %s", formatted_results['dates'][:2])
-        current_app.logger.debug("温度数据类型验证 - 最高温: %s", type(formatted_results['temp_max'][0]))
-        current_app.logger.debug("温度数据类型验证 - 最低温: %s", type(formatted_results['temp_min'][0]))
-        return jsonify({'status': 'success', 'predictions': formatted_results})
+        return jsonify({
+            'status': 'success',
+            'predictions': formatted_results,
+            'accuracy': metrics
+        })
     except Exception as e:
-        current_app.logger.error("预测失败: %s", str(e), exc_info=True)
+        current_app.logger.error(f"预测失败: {str(e)}", exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 # 后端相关业务处理
-
 @app.route('/upgrade_to_admin', methods=['POST'])  # 只处理 POST 请求
 @login_required
 def upgrade_to_admin():
@@ -1743,9 +1782,9 @@ def admin_dashboard():
     model_path = predictor.model_path
     model_count = len([f for f in os.listdir(model_path) if f.endswith('.joblib')]) if os.path.exists(
         model_path) else 0
-    # 获取最近更新的天气数据
+    # 获取爬虫最近更新的天气数据
     recent_weather = CleanedHistoricalWeather.query.order_by(CleanedHistoricalWeather.date.desc()).limit(5).all()
-    # 获取最近的预报数据
+    # 用户最近查看的预报数据
     recent_forecast = WeatherForecast.query.order_by(WeatherForecast.fx_date.desc()).limit(5).all()
 
     return render_template('admin/dashboard.html',
@@ -1808,16 +1847,27 @@ def admin_add_weather_data():
         weather = request.form.get('weather')
         wind_dir = request.form.get('wind_dir')
 
+        # 检查是否已存在相同城市和日期的记录
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        existing_record = CleanedHistoricalWeather.query.filter_by(
+            city_name=city_name,
+            date=date
+        ).first()
+
+        if existing_record:
+            flash(f'该城市在{date_str}已有天气数据记录，请勿重复添加', 'warning')
+            return redirect(url_for('admin_weather_data'))
+
         # 创建新记录
         new_data = CleanedHistoricalWeather(
             city_name=city_name,
-            date=datetime.strptime(date_str, '%Y-%m-%d').date(),
+            date=date,
             temp_max=temp_max,
             temp_min=temp_min,
             weather=weather,
             wind_dir=wind_dir,
-            year=datetime.strptime(date_str, '%Y-%m-%d').year,
-            month=datetime.strptime(date_str, '%Y-%m-%d').month
+            year=date.year,
+            month=date.month
         )
 
         db.session.add(new_data)
@@ -1827,7 +1877,6 @@ def admin_add_weather_data():
     except Exception as e:
         db.session.rollback()
         flash(f'天气数据添加失败: {str(e)}', 'danger')
-
     return redirect(url_for('admin_weather_data'))
 
 
@@ -1992,7 +2041,7 @@ def admin_prediction_models():
 # 添加缓存相关的全局变量
 city_data_cache = {}
 city_cache_time = 0
-CACHE_TIMEOUT = 5 * 60  # 5分钟缓存
+CACHE_TIMEOUT = 60  # 1分钟缓存
 
 def clear_city_data_cache():
     """清除城市数据缓存"""
@@ -2054,9 +2103,9 @@ def admin_cities_api():
         city_date_ranges = data['city_date_ranges']
 
         # 计算分页
-        total_items = len(cities)
-        total_pages = (total_items + per_page - 1) // per_page
-        start_idx = (page - 1) * per_page
+        total_items = len(cities)              # 城市数量
+        total_pages = (total_items + per_page - 1) // per_page  #总页数
+        start_idx = (page - 1) * per_page               #当前页在所有列表中的起止下标
         end_idx = min(start_idx + per_page, total_items)
 
         # 获取当前页数据
@@ -2121,45 +2170,71 @@ def admin_add_city():
         db.session.add(new_city_record)
         db.session.commit()
 
+        # 清除城市数据缓存
+        clear_city_data_cache()
+
         flash(f'城市 {city_name} 添加成功', 'success')
 
     except Exception as e:
         db.session.rollback()
         flash(f'添加城市失败: {str(e)}', 'danger')
 
-        return redirect(url_for('admin_cities'))
-
-
-# 爬取城市天气数据
-@app.route('/admin/crawl-weather/<city>')
-@admin_required
-def admin_crawl_weather(city):
-    try:
-        batch_crawl(city)
-        clear_city_data_cache()  # 清除缓存
-        flash(f'已爬取 {city} 的天气数据（2025年1月1日至今）。', 'success')
-    except Exception as e:
-        flash(f'爬取数据时发生错误: {str(e)}', 'danger')
     return redirect(url_for('admin_cities'))
 
 
-@app.route('/admin/crawl-all-cities')
-def crawl_all_cities():
-    """
-    爬取所有城市数据，并使用 Server-Sent Events (SSE) 将进度流式传输到前端。
-    """
-    def generate():
-        total_cities = len(CITY_INFO)
-        batch_crawl()  # 调用batch_crawl, 不传入参数
+# 添加一个全局变量来存储爬取任务状态
+crawl_tasks = {}
+
+@app.route('/admin/crawl-weather/<city>')
+@admin_required
+def admin_crawl_weather(city):
+    # 生成任务ID
+    task_id = str(uuid.uuid4())
+    crawl_tasks[task_id] = {'status': 'running', 'city': city}
+    
+    try:
+        # 检查是否被取消
+        if crawl_tasks[task_id]['status'] == 'cancelled':
+            return jsonify({'message': '任务已取消'}), 200
+            
+        # 执行爬取操作
+        batch_crawl(city)
         clear_city_data_cache()  # 清除缓存
-        data = {
-            'city_name': "所有城市",
-            'progress': 100
-        }
-        yield f"data: {json.dumps(data)}\n\n"  # SSE 格式
+        flash(f'已爬取 {city} 的天气数据（2025年1月1日至今）。', 'success')
+        
+        crawl_tasks[task_id]['status'] = 'completed'
+        return jsonify({'message': '数据爬取成功'})
+    except Exception as e:
+        crawl_tasks[task_id]['status'] = 'failed'
+        return jsonify({'message': str(e)}), 500
+    finally:
+        # 清理任务状态
+        if task_id in crawl_tasks:
+            del crawl_tasks[task_id]
 
-    return Response(stream_with_context(generate()), mimetype='text/event-stream')
+@app.route('/admin/crawl-all-cities')
+@admin_required
+def crawl_all_cities():
+    # 设置取消标志为 running
+    crawl_tasks['all'] = {'status': 'running', 'city': 'all'}
+    try:
+        batch_crawl()  # 阻塞直到所有城市都爬完
+        crawl_tasks['all']['status'] = 'completed'
+        return jsonify({'message': '所有城市数据爬取完成'})
+    except Exception as e:
+        crawl_tasks['all']['status'] = 'failed'
+        return jsonify({'message': str(e)}), 500
+    finally:
+        if 'all' in crawl_tasks:
+            del crawl_tasks['all']
 
+@app.route('/admin/cancel-crawl/<task_id>')
+@admin_required
+def cancel_crawl(task_id):
+    if task_id in crawl_tasks:
+        crawl_tasks[task_id]['status'] = 'cancelled'
+        return jsonify({'message': '任务已取消'})
+    return jsonify({'message': '任务不存在'}), 404
 
 # --- 用户管理路由 ---
 @app.route('/admin/users')
@@ -2281,9 +2356,16 @@ def admin_create_user():
             new_user.bio = bio
             new_user.location = location
             new_user.occupation = occupation
-            # 头像处理（如果有）- 类似于编辑用户的逻辑
+            # 头像处理
             if 'avatar_file' in request.files:
-                pass  # 暂时省略
+                avatar_file = request.files['avatar_file']
+                if avatar_file and avatar_file.filename:
+                    filename = secure_filename(f"avatar_{username}_{int(time.time())}.jpg")
+                    upload_folder = app.config['UPLOAD_FOLDER']
+                    os.makedirs(upload_folder, exist_ok=True)
+                    file_path = os.path.join(upload_folder, filename)
+                    avatar_file.save(file_path)
+                    new_user.avatar_file = filename
             db.session.add(new_user)
             db.session.commit()
             app.logger.info(f"管理员创建了新用户 (用户名: {username})")
@@ -2316,7 +2398,7 @@ def admin_feedback():
     return render_template('admin/feedback.html', feedbacks=feedbacks, user_dict=user_dict)
 
 
-# 添加删除反馈的路由
+# 删除反馈路由
 @app.route('/admin/feedback/delete/<int:feedback_id>', methods=['POST'])
 @login_required
 def delete_feedback(feedback_id):
@@ -2333,111 +2415,113 @@ def delete_feedback(feedback_id):
 @app.route('/admin/system-status')
 @admin_required
 def admin_system_status():
-    # 获取备份文件列表
-    backup_folder = current_app.config.get('BACKUP_FOLDER', 'backups')
-    backup_path = os.path.join(current_app.root_path, backup_folder)
-    backups = []
-    if os.path.exists(backup_path):
-        backups = [f for f in os.listdir(backup_path) if f.endswith('.sql')]
-    
-    # 获取系统状态
-    status = {
-        'db_records': {
-            'weather_data': WeatherData.query.count(),
-            'forecasts': WeatherForecast.query.count(),
-            'hourly_forecasts': HourlyForecast.query.count(),
-            'region_temperatures': RegionTemperature.query.count()
-        },
-        'trained_models': len([f for f in os.listdir(predictor.model_path) if f.endswith('.pkl')])
-    }
-    
-    # 获取系统日志
-    log_file = 'weather_system.log'
-    system_logs = ''
-    if os.path.exists(log_file):
-        with open(log_file, 'r', encoding='utf-8') as f:
-            system_logs = f.read()
-    
-    return render_template('admin/system_status.html', 
-                         status=status, 
-                         system_logs=system_logs,
-                         backups=backups,
-                         backup_form=DatabaseBackupForm())
+    try:
+        # 获取系统状态信息
+        status = {
+            'db_records': {
+                'weather_data': db.session.query(WeatherData).count(),
+                'forecasts': db.session.query(WeatherForecast).count(),
+                'hourly_forecasts': db.session.query(HourlyForecast).count(),
+                'region_temperatures': db.session.query(RegionTemperature).count()
+            },
+            'trained_models': len([f for f in os.listdir('models') if f.endswith('.pkl')]),
+            'system_info': {
+                'python_version': sys.version,
+                'platform': platform.platform(),
+                'memory_usage': psutil.Process().memory_info().rss / 1024 / 1024,  # MB
+                'cpu_usage': psutil.cpu_percent(interval=0.2),  # 采样0.2秒，获取真实值
+                'disk_usage': psutil.disk_usage('/').percent
+            }
+        }
+        
+        # 获取最近的系统日志
+        log_file = 'logs/app.log'
+        system_logs = []
+        if os.path.exists(log_file):
+            try:
+                with open(log_file, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+                    system_logs = lines[-50:] if len(lines) > 50 else lines
+            except UnicodeDecodeError:
+                try:
+                    with open(log_file, 'r', encoding='gbk') as f:
+                        lines = f.readlines()
+                        system_logs = lines[-50:] if len(lines) > 50 else lines
+                except:
+                    system_logs = ["无法读取日志文件"]
+        system_logs = ''.join(system_logs)
+        
+        return render_template('admin/system_status.html', 
+                             status=status,
+                             system_logs=system_logs)
+    except Exception as e:
+        flash(f'获取系统状态时出错: {str(e)}', 'error')
+        return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/system-settings', methods=['GET', 'POST'])
 @admin_required
 def admin_system():
+    # 获取系统状态信息
+    try:
+        status = {
+            'db_records': {
+                'weather_data': db.session.query(WeatherData).count(),
+                'forecasts': db.session.query(WeatherForecast).count(),
+                'hourly_forecasts': db.session.query(HourlyForecast).count(),
+                'region_temperatures': db.session.query(RegionTemperature).count()
+            },
+            'trained_models': len([f for f in os.listdir('models') if f.endswith('.pkl')]),
+            'system_info': {
+                'python_version': sys.version,
+                'platform': platform.platform(),
+                'memory_usage': psutil.Process().memory_info().rss / 1024 / 1024,  # MB
+                'cpu_usage': psutil.cpu_percent(interval=0.2),  # 采样0.2秒，获取真实值
+                'disk_usage': psutil.disk_usage('/').percent
+            }
+        }
+        
+        # 获取最近的系统日志
+        log_file = 'logs/app.log'
+        system_logs = []
+        if os.path.exists(log_file):
+            try:
+                with open(log_file, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+                    system_logs = lines[-50:] if len(lines) > 50 else lines
+            except UnicodeDecodeError:
+                try:
+                    with open(log_file, 'r', encoding='gbk') as f:
+                        lines = f.readlines()
+                        system_logs = lines[-50:] if len(lines) > 50 else lines
+                except:
+                    system_logs = ["无法读取日志文件"]
+        system_logs = ''.join(system_logs)
+    except Exception as e:
+        status = {
+            'db_records': {'weather_data': 0, 'forecasts': 0, 'hourly_forecasts': 0, 'region_temperatures': 0},
+            'trained_models': 0,
+            'system_info': {
+                'python_version': '未知',
+                'platform': '未知',
+                'memory_usage': 0,
+                'cpu_usage': 0,
+                'disk_usage': 0
+            }
+        }
+        system_logs = [f"获取系统状态时出错: {str(e)}"]
+
+    # 获取系统设置
     settings = SystemSetting.query.first()
     if not settings:
         settings = SystemSetting()
         db.session.add(settings)
         db.session.commit()
+
+    # 创建表单
     system_form = SystemSettingsForm(obj=settings)
     email_form = EmailSettingsForm(obj=settings)
-    auto_backup_form = AutoBackupForm(obj=settings)
     backup_form = DatabaseBackupForm()
-    if request.method == 'POST':
-        if request.form.get('form_type') == 'system_settings':
-            if system_form.validate_on_submit():
-                if system_form.system_logo.data:
-                    file = system_form.system_logo.data
-                    filename = secure_filename(file.filename)
-                    _, ext = os.path.splitext(filename)
-                    random_filename = secrets.token_hex(8)
-                    logo_filename = random_filename + ext
-                    logo_path = os.path.join(current_app.root_path, 'static', 'images', 'logos', logo_filename)
-                    os.makedirs(os.path.dirname(logo_path), exist_ok=True)
-                    favicon_path = os.path.join(current_app.root_path, 'static', 'images', 'favicons', 'favicon.ico')
-                    os.makedirs(os.path.dirname(favicon_path), exist_ok=True)
-                    file.save(logo_path)
-                    settings.system_logo = logo_filename
-                    try:
-                        img = Image.open(logo_path)
-                        img = img.resize((32, 32), Image.Resampling.LANCZOS)
-                        img.save(favicon_path, format='ICO')
-                    except (IOError, OSError) as e:
-                        flash(f"生成favicon失败: {e}", "error")
-                for name, field in system_form._fields.items():
-                    if name not in ('system_logo', 'submit', 'csrf_token'):
-                        setattr(settings, name, field.data)
-                db.session.commit()
-                flash('系统设置已更新!', 'success')
-                return redirect(url_for('admin_system', _anchor='system'))
-        elif request.form.get('form_type') == 'email_settings':
-            if email_form.enable_email_notifications.data:
-                if email_form.validate_on_submit():
-                    for name, field in email_form._fields.items():
-                        if name not in ('submit', 'csrf_token'):
-                            setattr(settings, name, field.data)
-                    db.session.commit()
-                    flash('邮件设置已更新!', 'success')
-                    return redirect(url_for('admin_system', _anchor='email'))
-                else:
-                    for field, errors in email_form.errors.items():
-                        for error in errors:
-                            flash(f"{email_form[field].label.text}: {error}", 'error')
-            elif not email_form.enable_email_notifications.data:
-                settings.enable_email_notifications = False
-                settings.smtp_server = None
-                settings.smtp_port = None
-                settings.sender_email = None
-                settings.smtp_password = None
-                settings.email_encryption = None
-                db.session.commit()
-                flash('邮件通知已关闭!', 'success')
-                return redirect(url_for('admin_system', _anchor='email'))
-        elif request.form.get('form_type') == 'auto_backup':
-            if auto_backup_form.validate_on_submit():
-                settings.auto_backup_enabled = auto_backup_form.auto_backup_enabled.data
-                settings.auto_backup_interval = auto_backup_form.auto_backup_interval.data
-                db.session.commit()
-                flash('自动备份设置已更新!', 'success')
-                return redirect(url_for('admin_system', _anchor='backup'))
-            else:
-                for field, errors in auto_backup_form.errors.items():
-                    for error in errors:
-                        flash(f"{auto_backup_form[field].label.text}: {error}", 'error')
-                return redirect(url_for('admin_system', _anchor='backup'))
+    auto_backup_form = AutoBackupForm(obj=settings)
 
     # 获取备份文件列表
     backup_folder = current_app.config.get('BACKUP_FOLDER', 'backups')
@@ -2445,52 +2529,53 @@ def admin_system():
     backups = []
     if os.path.exists(backup_path):
         backups = [f for f in os.listdir(backup_path) if f.endswith('.sql')]
-        backups.sort(reverse=True)  # 最新的备份在前面
+        backups.sort(key=lambda x: os.path.getmtime(os.path.join(backup_path, x)), reverse=True)
 
-    # 获取系统状态信息
-    status = {
-        'db_records': {
-            'weather_data': CleanedHistoricalWeather.query.count(),
-            'forecasts': WeatherForecast.query.count(),
-            'hourly_forecasts': HourlyForecast.query.count(),
-            'region_temperatures': RegionTemperature.query.count()
-        },
-        'trained_models': 0
-    }
-    if os.path.exists(predictor.model_path):
-        status['trained_models'] = len([f for f in os.listdir(predictor.model_path) if f.endswith('.joblib')])
-
-    # 获取系统日志
-    system_logs = "暂无日志"
-    log_file = os.path.join('logs', 'app.log')
-    if os.path.exists(log_file):
-        try:
-            with open(log_file, 'r', encoding='gbk') as f:
-                logs = f.readlines()[-100:]
-                system_logs = ''.join(logs)
-        except Exception as e:
-            system_logs = f"读取日志出错: {str(e)}"
+    if request.method == 'POST':
+        form_type = request.form.get('form_type')
+        
+        if form_type == 'system_settings' and system_form.validate_on_submit():
+            system_form.populate_obj(settings)
+            # 处理logo上传
+            if system_form.system_logo.data:
+                file = system_form.system_logo.data
+                from werkzeug.utils import secure_filename
+                filename = secure_filename(file.filename)
+                logo_folder = os.path.join(app.static_folder, 'images', 'logos')
+                os.makedirs(logo_folder, exist_ok=True)
+                save_path = os.path.join(logo_folder, filename)
+                file.save(save_path)  # 以二进制方式安全保存
+                settings.system_logo = filename
+            db.session.commit()
+            flash('系统设置已更新', 'success')
+            return redirect(url_for('admin_system'))
+            
+        elif form_type == 'email_settings' and email_form.validate_on_submit():
+            email_form.populate_obj(settings)
+            db.session.commit()
+            flash('邮件设置已更新', 'success')
+            return redirect(url_for('admin_system'))
+            
+        elif form_type == 'auto_backup' and auto_backup_form.validate_on_submit():
+            auto_backup_form.populate_obj(settings)
+            db.session.commit()
+            flash('自动备份设置已更新', 'success')
+            return redirect(url_for('admin_system'))
 
     return render_template('admin/system_settings.html',
                          system_form=system_form,
                          email_form=email_form,
+                         backup_form=backup_form,
                          auto_backup_form=auto_backup_form,
                          settings=settings,
                          backups=backups,
-                         backup_form=backup_form,
                          status=status,
-                         predictor=predictor,
                          system_logs=system_logs)
 
 # 数据库备份路径
 BACKUP_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backups')
 if not os.path.exists(BACKUP_FOLDER):
     os.makedirs(BACKUP_FOLDER)
-
-# Flask应用配置部分
-handler = RotatingFileHandler('weather_system.log', maxBytes=10000, backupCount=1)
-handler.setLevel(logging.INFO)
-app.logger.addHandler(handler)
 
 
 # 添加数据库恢复功能
@@ -2578,7 +2663,7 @@ def admin_list_backups():
         backups = []
         if os.path.exists(backup_path):
             backups = [f for f in os.listdir(backup_path) if f.endswith('.sql')]
-            backups.sort(reverse=True)  # 最新的备份在前面
+            backups.sort(key=lambda x: os.path.getmtime(os.path.join(backup_path, x)), reverse=True)
         return jsonify(backups)
     except Exception as e:
         return jsonify({
@@ -2591,23 +2676,24 @@ def admin_list_backups():
 @admin_required
 def admin_clear_cache():
     try:
-        # 计算7天前的日期
+        app.logger.info('开始清除系统缓存')
         seven_days_ago = datetime.now() - timedelta(days=7)
 
-        # 清除7天前的区域温度缓存
         deleted_temps = RegionTemperature.query.filter(RegionTemperature.update_time < seven_days_ago).delete()
         db.session.commit()
+        app.logger.info(f'已清除 {deleted_temps} 条区域温度缓存数据')
 
-        # 清除7天前的预报缓存
         deleted_hourly = HourlyForecast.query.filter(HourlyForecast.update_time < seven_days_ago).delete()
         deleted_daily = WeatherForecast.query.filter(WeatherForecast.update_time < seven_days_ago.date()).delete()
         db.session.commit()
+        app.logger.info(f'已清除 {deleted_hourly} 条小时预报和 {deleted_daily} 条天气预报缓存数据')
 
         flash(
             f'已成功清除过期缓存数据 ({deleted_temps}条区域温度数据, {deleted_hourly}条小时预报, {deleted_daily}条天气预报)',
             'success')
     except Exception as e:
         db.session.rollback()
+        app.logger.error(f'清除缓存失败: {str(e)}')
         flash(f'清除缓存失败: {str(e)}', 'danger')
     return redirect(url_for('admin_system',_anchor="status"))
 
@@ -2652,35 +2738,30 @@ def get_db_connection_params(db_uri):
     else:
         return None
 
+# 手动备份
 @app.route('/admin/backup', methods=['POST'])
 @admin_required
 def backup_database():
     close_all_db_connections()
     try:
-        # 获取备份描述
         backup_description = request.form.get('backup_description', '').strip()
+        app.logger.info(f'开始数据库备份，描述: {backup_description}')
         
-        # 获取数据库连接信息
         db_user = app.config.get('MYSQL_USER', 'root')
         db_password = app.config.get('MYSQL_PASSWORD', 'fumo666')
         db_name = app.config.get('MYSQL_DB', 'weather_system_db')
         db_host = app.config.get('MYSQL_HOST', 'localhost')
 
-        # 生成备份文件名，保持原有格式
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         if backup_description:
-            # 清理描述中的非法字符
             backup_description = re.sub(r'[\\/:*?"<>|]', '_', backup_description)
             backup_description = backup_description.replace(' ', '_')
             filename = f"backup_weather_system_db_{timestamp}_{backup_description}.sql"
         else:
-            # 如果没有描述，使用随机字符串
             filename = f"backup_weather_system_db_{timestamp}_{secrets.token_hex(4)}.sql"
 
-        # 构建完整的备份文件路径
         backup_file = os.path.join(BACKUP_FOLDER, filename)
 
-        # 构建mysqldump命令
         cmd = [
             'mysqldump',
             f'--user={db_user}',
@@ -2693,7 +2774,6 @@ def backup_database():
             f'> {backup_file}'
         ]
 
-        # 执行备份命令
         result = subprocess.run(' '.join(cmd), shell=True, capture_output=True, text=True)
 
         if result.returncode == 0:
@@ -2721,7 +2801,7 @@ def close_all_db_connections():
     db.engine.dispose()
 
 
-# 简化的自动备份函数（需要与你的调度系统集成）
+# 简化的自动备份函数
 def perform_auto_backup():
     with current_app.app_context():
         settings = SystemSetting.query.first()
@@ -2761,6 +2841,7 @@ def perform_auto_backup():
             except OSError as e:
                 print(f"自动备份创建目录失败: {e}")
 
+# 生成报告
 @app.route('/admin/generate-report')
 @admin_required
 def admin_generate_report():
@@ -2883,13 +2964,13 @@ def get_weather_wordcloud(city):
         if not weather_data:
              return jsonify({'status': 'success', 'data': [], 'total_days': 0, 'message': '未找到该城市的历史天气数据'})
 
-        # 2. 使用 Counter 统计词频 (结合方法一和方法二)
+        # 2. 使用 Counter 统计词频
         wordcloud_counter = Counter()
         processed_records = 0
 
         for record in weather_data:
             processed_records += 1
-            # --- Process weather field (Method 1 + Original Logic) ---
+
             if record.weather:
                 # Handle descriptions like "晴转多云" or "小雨、阵雨"
                 conditions = record.weather.replace('转', '、').split('、')
@@ -2906,25 +2987,20 @@ def get_weather_wordcloud(city):
             if record.wind_dir:
                 wind_direction = record.wind_dir.strip()
                 if wind_direction: # Ensure not empty
-                    # You might want to split wind descriptions if they contain levels, e.g., "微风 <3级"
-                    # For simplicity, we'll just count the whole string here.
-                    # Example split: wind_parts = wind_direction.split() -> wordcloud_counter[wind_parts[0]] +=1
                     wordcloud_counter[wind_direction] += 1
 
-        # 3. 过滤和格式化数据
-        # Optional: Filter out very low frequency words
         
-        min_frequency = 2 # Example: only include words appearing at least twice
+        min_frequency = 2 # 仅包含出现至少两次的单词
         filtered_word_freq = {word: freq for word, freq in wordcloud_counter.items() if freq >= min_frequency}
 
-        # Convert to the list format required by ECharts Wordcloud
+        # 转换为 ECharts Wordcloud 所需的列表格式
         wordcloud_data = [{'name': word, 'value': freq} for word, freq in filtered_word_freq.items()]
 
-        # Sort by frequency (descending)
+        # 按频率降序排序
         wordcloud_data.sort(key=lambda x: x['value'], reverse=True)
 
-        # Optional: Limit the number of words sent to the frontend
-        max_words = 150 # Example: limit to top 150 words
+        # 限制发送给前端的单词数量
+        max_words = 150 # 限制为前 150 个单词
         wordcloud_data = wordcloud_data[:max_words]
 
         print(f"为 {city} 生成词云，源数据 {len(weather_data)} 条, 处理后词语 {len(wordcloud_data)} 个")
@@ -2932,19 +3008,123 @@ def get_weather_wordcloud(city):
         return jsonify({
             'status': 'success',
             'data': wordcloud_data,
-            'total_days': len(weather_data) # Keep total_days if frontend uses it
+            'total_days': len(weather_data) # 保留 total_days 如果前端使用它
         })
 
     except Exception as e:
-        # Log the error for debugging
-        print(f"Error generating word cloud for {city}: {e}")
+        # 记录错误用于调试
+        print(f"生成 {city} 词云时出错: {e}")
         import traceback
-        traceback.print_exc() # Print detailed traceback
+        traceback.print_exc() # 打印详细回溯
         return jsonify({
             'status': 'error',
             'message': f'生成天气词云时出错: {str(e)}'
         }), 500
 
+@app.route('/compare')
+def compare_page():
+    return render_template('compare.html')
+
+@app.route('/api/weather/compare', methods=['GET'])
+def compare_weather_data():
+    """对比多个城市或时间段的天气数据"""
+    cities = request.args.getlist('city')  # 支持多个城市参数
+    start = request.args.get('start')
+    end = request.args.get('end')
+    metrics = request.args.get('metrics', 'temp_max,temp_min')  # 默认对比最高最低温
+    
+    if not cities:
+        return jsonify({'status': 'error', 'message': '至少需要选择一个城市'}), 400
+    
+    # 查询每个城市的数据
+    results = {}
+    for city in cities:
+        query = CleanedHistoricalWeather.query.filter(
+            CleanedHistoricalWeather.city_name.ilike(f"%{city}%")
+        )
+        
+        if start and end:
+            query = query.filter(CleanedHistoricalWeather.date.between(start, end))
+        
+        data = query.order_by(CleanedHistoricalWeather.date.asc()).all()
+        
+        results[city] = [{
+            'date': item.date.strftime('%Y-%m-%d'),
+            'temp_max': item.temp_max,
+            'temp_min': item.temp_min,
+            'weather': item.weather
+        } for item in data]
+    
+    return jsonify({
+        'status': 'success',
+        'data': results,
+        'metrics': metrics.split(',')
+    })
+
+@app.route('/weather_analysis/<city>')
+def weather_analysis(city):
+    """
+    天气数据分析页面
+    展示：
+    1. 温度趋势分析
+    2. 季节性模式
+    3. 天气模式分析
+    4. 异常天气事件
+    """
+    try:
+        predictor = WeatherPredictor()  # 创建预测器实例
+        analysis_report = predictor.generate_analysis_report(city)  # 生成分析报告
+        return jsonify({
+            'status': 'success',
+            'data': analysis_report
+        })
+    except Exception as e:
+        current_app.logger.error("分析失败: %s", str(e), exc_info=True) # 记录错误
+        return jsonify({
+            'status': 'error',
+            'message': f'分析失败: {str(e)}'
+        }), 500
+
+@app.route('/analysis_view')
+def analysis_view():
+    return render_template('analysis_view.html')
+
+# 删除账号API
+@app.route('/profile/delete_account', methods=['POST'])
+@login_required
+def delete_account():
+    try:
+        data = request.get_json() # 获取请求数据
+        password = data.get('password') # 获取密码
+        if not password or not current_user.check_password(password): # 检查密码
+            return jsonify({'success': False, 'message': '密码错误'}), 400
+        user_id = current_user.id
+        # 删除相关数据（如活动、收藏、历史等）
+        UserActivity.query.filter_by(user_id=user_id).delete()
+        FavoriteLocation.query.filter_by(user_id=user_id).delete()
+        SearchHistory.query.filter_by(user_id=user_id).delete()
+        Feedback.query.filter_by(user_id=user_id).delete()
+        # 删除用户本身
+        user = User.query.get(user_id)
+        if user:
+            db.session.delete(user) # 删除用户
+        db.session.commit() # 提交事务
+        logout_user() # 注销用户
+        return jsonify({'success': True}) # 返回成功
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# 从数据库获取系统设置
+@app.context_processor
+def inject_now():
+    settings = SystemSetting.query.first()
+    return {
+        'now': datetime.now,
+        'system_name': settings.system_name if settings and settings.system_name else '天气数据管理系统'
+    }
+
 
 if __name__ == '__main__':
     app.run(debug=True)
+

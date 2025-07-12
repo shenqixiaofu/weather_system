@@ -20,7 +20,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="font-weight-bold text-primary text-uppercase mb-1" style="font-size: 1.1rem;">
-                            天气数据记录</div>
+                            历史天气数据条数</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800" style="font-size: 1.5rem;">{{ weather_data_count }}</div>
                     </div>
                     <div class="col-auto">
@@ -56,7 +56,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="font-weight-bold text-info text-uppercase mb-1" style="font-size: 1.1rem;">
-                            区域数量</div>
+                            省份数量</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800" style="font-size: 1.5rem;">{{ region_count }}</div>
                     </div>
                     <div class="col-auto">
@@ -92,7 +92,7 @@
     <div class="col-xl-6 col-lg-6">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary" style="font-size: 1.25rem;">最近天气数据</h6>
+                <h6 class="m-0 font-weight-bold text-primary" style="font-size: 1.25rem;">爬虫最近获取的天气数据</h6>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -127,7 +127,7 @@
     <div class="col-xl-6 col-lg-6">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary" style="font-size: 1.25rem;">最近预报数据</h6>
+                <h6 class="m-0 font-weight-bold text-primary" style="font-size: 1.25rem;">用户最近查看的预报数据</h6>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -186,7 +186,7 @@
                          <small class="text-muted" style="font-size: 1rem;">添加、删除和修改城市数据。</small>
                     </div>
                     <div class="col-md-3 mb-3">
-                        <a href="{{ url_for('admin_system_status') }}" class="btn btn-warning btn-block" style="font-size: 1.1rem;">
+                        <a href="{{ url_for('admin_system') }}#status" class="btn btn-warning btn-block" style="font-size: 1.1rem;">
                             <i class="fas fa-server me-2"></i> 查看系统状态
                         </a><br>
                          <small class="text-muted" style="font-size: 1rem;">监控系统资源使用情况和日志。</small>

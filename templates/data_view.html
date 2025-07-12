@@ -9,8 +9,8 @@
         <i class="fas fa-chart-line me-2"></i>天气数据看板
     </h1>
     <!-- 筛选条件 -->
-    <div class="filter-box">
-        <div class="row align-items-center">
+    <div class="filter-box mb-4 shadow-sm">
+        <div class="row align-items-center g-2">
             <div class="col-md-2 mb-2 mb-md-0">
                 <select id="provinceSelect" class="form-select">
                     <option value="">请选择省份</option>
@@ -28,8 +28,11 @@
                 <input type="date" id="endDate" class="form-control" placeholder="结束日期">
             </div>
             <div class="col-md-4 text-md-end">
-                <button onclick="loadData()" class="btn btn-primary">
+                <button onclick="loadData(1)" class="btn btn-primary shadow-sm">
                     <i class="fas fa-filter me-1"></i>筛选
+                </button>
+                <button class="btn btn-outline-secondary ms-2 btn-sm" onclick="exportTableData()">
+                    <i class="fas fa-download me-1"></i>导出数据
                 </button>
             </div>
         </div>
@@ -39,33 +42,39 @@
         <div class="loader-spinner"></div>
         <p class="mt-3 text-muted">正在加载数据...</p>
     </div>
+    <!-- 无数据提示 -->
+    <div id="noDataTip" class="alert alert-info text-center" style="display:none;">暂无数据，请调整筛选条件</div>
     <!-- 数据表格 -->
     <div id="tableSection">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="m-0"><i class="fas fa-table me-2"></i>部分气象数据表</h5>
-             <button class="btn btn-outline-secondary btn-sm" onclick="exportTableData()">
-                <i class="fas fa-download me-1"></i>导出数据
-            </button>
+            <h5 class="m-0"><i class="fas fa-table me-2"></i>气象数据表</h5>
         </div>
         <div class="table-responsive">
-            <table class="table">
+            <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th>城市</th>
-                        <th>日期</th>
-                        <th>最高温</th>
-                        <th>最低温</th>
-                        <th>天气</th>
+                        <th style="text-align:center;">城市</th>
+                        <th style="text-align:center;">日期</th>
+                        <th style="text-align:center;">最高温</th>
+                        <th style="text-align:center;">最低温</th>
+                        <th style="text-align:center;">天气</th>
                     </tr>
                 </thead>
                 <tbody id="dataBody"></tbody>
             </table>
         </div>
+        <!-- 分页控件 -->
+        <nav id="paginationNav" aria-label="分页" class="mt-3" style="display:none;">
+            <ul class="pagination justify-content-center mb-0" id="pagination"></ul>
+        </nav>
     </div>
     <!-- 温度趋势图 -->
-    <div class="chart-container">
+    <div class="chart-container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="m-0"><i class="fas fa-temperature-high me-2"></i>温度趋势图</h5>
+            <h5 class="m-0">
+                <i class="fas fa-temperature-high me-2"></i>
+                <span id="trendTitle">温度趋势图（请选择城市）</span>
+            </h5>
         </div>
         <div id="tempChart" style="height: 350px;"></div>
     </div>

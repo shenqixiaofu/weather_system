@@ -1,6 +1,6 @@
 // static/js/index.js
 
-(function() {
+(function () {
     const theme = document.documentElement.getAttribute('data-theme') || 'light';
     if (theme === 'dark') {
         document.body.classList.add('dark-mode');
@@ -44,7 +44,7 @@ let index = {
 // 当前温度周期
 let currentTempPeriod = 'day';
 
-// API请求处理 (与之前版本相同)
+// API请求处理
 async function apiRequest(url) {
     try {
         const response = await $.ajax({
@@ -75,6 +75,7 @@ async function apiRequest(url) {
 
 // 初始化图表
 function initEmptyCharts() {
+    // 初始化温度曲线图 - 空数据
     index.tempChart = echarts.init(document.getElementById('tempChart'));
     index.tempChart.setOption({
         tooltip: {trigger: 'axis'},
@@ -110,7 +111,7 @@ function initEmptyCharts() {
             type: 'category',
             data: []
         },
-        yAxis: {type: 'value', name: '降水量 (mm)'},
+        yAxis: {type: 'value', name: '降水量 (mm)', padding: [0, 0, 0, 20]},
         series: [{
             name: '降水量',
             type: 'bar',
@@ -244,10 +245,10 @@ function initEmptyCharts() {
     const wordcloudContainer = document.getElementById('wordcloudChart');
     wordcloudContainer.style.height = '400px';  // 确保容器有高度
     console.log('初始化词云图容器尺寸:', wordcloudContainer.offsetWidth, wordcloudContainer.offsetHeight);
-    
+
     index.wordcloudChart = echarts.init(wordcloudContainer);
     console.log('词云图实例:', index.wordcloudChart);
-    
+
     // 设置基础配置
     const wordcloudOption = {
         series: [{
@@ -291,7 +292,7 @@ function initEmptyCharts() {
     // 确保所有图表容器有高度,或者用js设置也可以.
     document.querySelectorAll('.chart-container').forEach(container => {
         container.style.height = '400px'; // 或者其他合适的高度
-     });
+    });
 }
 
 // 更新温度曲线图表 (同时处理日、周、月)
@@ -443,14 +444,14 @@ async function updateTempChart(city, period = 'day') {
                     },
                     areaStyle: { // 添加面积图
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            { offset: 0, color: 'rgba(255, 107, 107, 0.8)' }, // 更深、更不透明
-                            { offset: 1, color: 'rgba(255, 107, 107, 0.2)' } // 更浅、更透明
+                            {offset: 0, color: 'rgba(255, 107, 107, 0.8)'}, // 更深、更不透明
+                            {offset: 1, color: 'rgba(255, 107, 107, 0.2)'} // 更浅、更透明
                         ])
                     },
                     symbol: 'circle', // 数据点样式
                     symbolSize: 8 // 数据点大小
                 }];
-                baseOption.legend = { show: false }; // 日数据通常不显示图例
+                baseOption.legend = {show: false};
 
             } else { // 'week' 和 'month'
                 baseOption.series = [
@@ -466,10 +467,10 @@ async function updateTempChart(city, period = 'day') {
                         itemStyle: {
                             color: '#e65100'
                         },
-                         areaStyle: { // 添加面积图
+                        areaStyle: { // 添加面积图
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: 'rgba(230, 81, 0, 0.8)' },
-                                { offset: 1, color: 'rgba(230, 81, 0, 0.2)' }
+                                {offset: 0, color: 'rgba(230, 81, 0, 0.8)'},
+                                {offset: 1, color: 'rgba(230, 81, 0, 0.2)'}
                             ])
                         },
                         symbol: 'circle',
@@ -487,10 +488,10 @@ async function updateTempChart(city, period = 'day') {
                         itemStyle: {
                             color: '#1e88e5'
                         },
-                         areaStyle: { // 添加面积图
+                        areaStyle: { // 添加面积图
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: 'rgba(30, 136, 229, 0.8)' },
-                                { offset: 1, color: 'rgba(30, 136, 229, 0.2)' }
+                                {offset: 0, color: 'rgba(30, 136, 229, 0.8)'},
+                                {offset: 1, color: 'rgba(30, 136, 229, 0.2)'}
                             ])
                         },
                         symbol: 'circle',
@@ -515,13 +516,13 @@ async function updateTempChart(city, period = 'day') {
                 index.tempChart.setOption(baseOption, true);
             } else {
                 index.tempChart.setOption({
-                    title: { text: '暂无数据', left: 'center', top: 'middle' }
+                    title: {text: '暂无数据', left: 'center', top: 'middle'}
                 }, true);
             }
 
         } else {
             index.tempChart.setOption({
-                title: { text: '暂无数据', left: 'center', top: 'middle' }
+                title: {text: '暂无数据', left: 'center', top: 'middle'}
             }, true);
         }
 
@@ -531,7 +532,7 @@ async function updateTempChart(city, period = 'day') {
         console.error("更新温度图表失败:", error);
         showAlert(`更新温度图表失败: ${error.message}`, 'danger');
         index.tempChart.setOption({
-            title: { text: '暂无数据', left: 'center', top: 'middle' }
+            title: {text: '暂无数据', left: 'center', top: 'middle'}
         }, true);
         return false;
     }
@@ -543,12 +544,12 @@ async function updateRadarChart(city) {
         const response = await apiRequest(`/radar_data/${city}`);
         console.log("雷达图API响应:", response);
         if (response && response.status === 'success' && response.data && response.indicators) {
-            const indicators = response.indicators.map(name => ({ name: name, max: 100 }));
+            const indicators = response.indicators.map(name => ({name: name, max: 100}));
             if (!Array.isArray(response.data) || response.data.length !== indicators.length) {
                 console.error("雷达图数据格式不正确或数据缺失:", response);
                 showAlert("雷达图数据格式不正确或数据缺失", "warning");
                 index.weatherRadarChart.setOption({
-                    title: { text: '暂无数据', left: 'center', top: 'middle' }
+                    title: {text: '暂无数据', left: 'center', top: 'middle'}
                 }, true);
                 return;
             }
@@ -582,14 +583,13 @@ async function updateRadarChart(city) {
                     }]
                 }]
             }, true);
-            //index.weatherRadarChart.resize(); // 数据加载完,resize一次.
         } else {
-            index.weatherRadarChart.setOption({ title: { text: '暂无数据', left: 'center', top: 'middle' } }, true);
+            index.weatherRadarChart.setOption({title: {text: '暂无数据', left: 'center', top: 'middle'}}, true);
         }
     } catch (error) {
         console.error("更新雷达图失败:", error);
         showAlert(`更新雷达图失败: ${error.message}`, 'danger');
-        index.weatherRadarChart.setOption({ title: { text: '暂无数据', left: 'center', top: 'middle' } }, true);
+        index.weatherRadarChart.setOption({title: {text: '暂无数据', left: 'center', top: 'middle'}}, true);
     }
 }
 
@@ -599,22 +599,22 @@ async function updateAllCharts(city) {
 
         // 并发请求所有数据
         const [tempData, radarData, forecastData, hourlyData, historyData] = await Promise.all([
-          updateTempChart(city, currentTempPeriod),
-          updateRadarChart(city),
-          apiRequest(`/weekly_data/${city}`),
-          apiRequest(`/hourly_data/${city}`),
-          apiRequest(`/cleaned_historical_weather/${city}`)
+            updateTempChart(city, currentTempPeriod),
+            updateRadarChart(city),
+            apiRequest(`/weekly_data/${city}`),
+            apiRequest(`/hourly_data/${city}`),
+            apiRequest(`/cleaned_historical_weather/${city}`)
         ]);
-          console.log("历史天气数据:", historyData);
+        console.log("历史天气数据:", historyData);
 
         // 更新降水量图表
-         if (hourlyData && hourlyData.status === 'success' && hourlyData.precip && hourlyData.times) {
+        if (hourlyData && hourlyData.status === 'success' && hourlyData.precip && hourlyData.times) {
             index.rainfallChart.setOption({
                 xAxis: {data: hourlyData.times},
                 series: [{data: hourlyData.precip.map(val => parseFloat(val))}]
             });
         } else if (hourlyData && hourlyData.times && hourlyData.precip) {
-             index.rainfallChart.setOption({
+            index.rainfallChart.setOption({
                 xAxis: {data: hourlyData.times},
                 series: [{data: hourlyData.precip}]
             });
@@ -643,7 +643,7 @@ async function updateAllCharts(city) {
                 }
             });
             console.log("统计后的 weatherTypes:", weatherTypes);
-            const pieData = Object.entries(weatherTypes).map(([name, value]) => ({ name, value }));
+            const pieData = Object.entries(weatherTypes).map(([name, value]) => ({name, value}));
             console.log("最终的 pieData:", pieData);
 
             if (pieData.length > 0) {
@@ -653,15 +653,16 @@ async function updateAllCharts(city) {
                         formatter: '{a} {b}: {c}天 ({d}%)'
                     },
                     legend: {
-                        orient: 'vertical',
-                        right: 10,
-                        top: 'center',
+                        orient: 'horizontal',
+                        bottom: 20,
+                        left: 'center',
                         data: pieData.map(item => item.name)
                     },
                     series: [{
                         name: '天气状况',
                         type: 'pie',
-                        radius: '55%',
+                        radius: ['30%', '60%'],
+                        center: ['50%', '45%'],
                         avoidLabelOverlap: false,
                         itemStyle: {
                             borderRadius: 10,
@@ -669,36 +670,17 @@ async function updateAllCharts(city) {
                             borderWidth: 2
                         },
                         emphasis: {
-                            label: { show: true, fontSize: '16', fontWeight: 'bold' }
+                            label: {show: true, fontSize: '16', fontWeight: 'bold'}
                         },
                         data: pieData
-                    }],
-                    media: [{   //默认
-                            option:{}
-                        },
-                        {
-                            query: {
-                                maxWidth: 767  // 假设小于768px为小屏幕
-                            },
-                            option: {
-                                legend: {
-                                    orient: 'horizontal', // 图例水平排列
-                                    right: 'center',      // 图例居中
-                                    top: 'bottom'      // 图例置于底部
-                                },
-                                series: [{
-                                    radius: ['30%', '50%'] // 缩小饼图半径
-                                }]
-                            }
-                        }
-                    ]
+                    }]
                 }, true);
 
             } else {
-                index.weatherPieChart.setOption({ title: { text: '暂无数据', left: 'center', top: 'middle' } }, true);
+                index.weatherPieChart.setOption({title: {text: '暂无数据', left: 'center', top: 'middle'}}, true);
             }
         } else {
-            index.weatherPieChart.setOption({ title: { text: '暂无数据', left: 'center', top: 'middle' } }, true);
+            index.weatherPieChart.setOption({title: {text: '暂无数据', left: 'center', top: 'middle'}}, true);
         }
 
         // 更新预报图
@@ -707,12 +689,12 @@ async function updateAllCharts(city) {
             const highTemps = forecastData.temp_max || [];
             const lowTemps = forecastData.temp_min || [];
             let rainProb = [];
-            if(forecastData.precip && forecastData.precip.length > 0){
+            if (forecastData.precip && forecastData.precip.length > 0) {
                 rainProb = forecastData.precip.map(p => precipToRainProbability(p));
             }
             index.forecastChart.setOption({
                 xAxis: {data: dates.map(d => typeof d === 'string' ? d : String(d))},
-                        boundaryGap: true,
+                boundaryGap: true,
                 series: [
                     {data: highTemps.map(t => typeof t === 'number' ? t : parseFloat(t))},
                     {data: lowTemps.map(t => typeof t === 'number' ? t : parseFloat(t))},
@@ -735,22 +717,22 @@ async function updateAllCharts(city) {
             console.log('开始更新词云图，当前城市:', currentCity);
             const wordcloudData = await apiRequest(`/weather_wordcloud/${currentCity}`);
             console.log("词云数据:", wordcloudData);
-            
+
             if (wordcloudData && wordcloudData.status === 'success' && wordcloudData.data && wordcloudData.data.length > 0) {
                 console.log('准备词云数据:', wordcloudData.data);
                 console.log('总天数:', wordcloudData.total_days);
-                
+
                 // 准备数据
                 const data = wordcloudData.data.map(item => ({
                     name: item.name,
-                    value: 10,
+                    value: item.value,
                     textStyle: {
-                        color: '#' + Math.floor(Math.random()*0xFFFFFF).toString(16).padStart(6, '0')
+                        color: '#' + Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0')
                     }
                 }));
-                
+
                 console.log('处理后的词云数据:', data);
-                
+
                 // 使用新的配置
                 const option = {
                     title: {
@@ -763,9 +745,9 @@ async function updateAllCharts(city) {
                     },
                     tooltip: {
                         show: true,
-                        formatter: function(params) {
+                        formatter: function (params) {
                             const percentage = ((params.value / 10) / wordcloudData.total_days * 100).toFixed(1);
-                            return `${params.name}: ${params.value/10}天 (${percentage}%)`;
+                            return `${params.name}: ${params.value / 10}天 (${percentage}%)`;
                         }
                     },
                     series: [{
@@ -795,13 +777,13 @@ async function updateAllCharts(city) {
                         data: data
                     }]
                 };
-                
+
                 try {
                     console.log('开始设置词云图配置');
                     index.wordcloudChart.clear();
                     index.wordcloudChart.setOption(option, true);
                     console.log('词云图配置设置完成');
-                    
+
                     // 确保图表容器可见
                     const container = document.getElementById('wordcloudChart');
                     if (container) {
@@ -809,7 +791,7 @@ async function updateAllCharts(city) {
                         container.style.visibility = 'visible';
                         console.log('词云图容器尺寸:', container.offsetWidth, container.offsetHeight);
                     }
-                    
+
                     // 延迟执行resize
                     setTimeout(() => {
                         console.log('执行resize');
@@ -840,9 +822,9 @@ async function updateAllCharts(city) {
         console.error("更新图表失败:", error);
         showAlert(`更新图表失败: ${error.message}`, 'danger');
         Object.values(index).forEach(chart => {
-          if(chart){ //防止空指针
-             chart.setOption({ title: { text: '暂无数据', left: 'center', top: 'middle' } }, true);
-          }
+            if (chart) { //防止空指针
+                chart.setOption({title: {text: '暂无数据', left: 'center', top: 'middle'}}, true);
+            }
 
         });
         return false; // 有图表更新失败
@@ -860,9 +842,45 @@ function precipToRainProbability(precipAmount) {
     return 99;
 }
 
+// ====== 本地缓存相关函数 ======
+function saveWeatherCache(city, data) {
+    localStorage.setItem('weatherCache_' + city, JSON.stringify({
+        data: data,
+        time: Date.now()
+    }));
+}
+
+function loadWeatherCache(city, maxAgeMinutes = 60) {
+    const cache = localStorage.getItem('weatherCache_' + city);
+    if (!cache) return null;
+    try {
+        const obj = JSON.parse(cache);
+        if (Date.now() - obj.time < maxAgeMinutes * 60 * 1000) {
+            return obj.data;
+        }
+    } catch (e) {
+    }
+    return null;
+}
+
+function renderWeatherData(city, data, isCache = false) {
+    document.getElementById('currentCity').textContent = city;
+    document.getElementById('cityDisplay').style.display = 'block';
+    document.getElementById('currentTemp').textContent = `${data.temp || '--'}°C`;
+    document.getElementById('currentHumidity').textContent = `${data.humidity || '--'}%`;
+    document.getElementById('currentWind').textContent = `${data.windSpeed || '--'} km/h`;
+    document.getElementById('currentWindDirection').textContent = data.windDirection || '--';
+    document.getElementById('currentWeather').textContent = data.text || '--';
+    document.getElementById('overviewCards').style.display = 'flex';
+    document.getElementById('chartCards').style.display = 'flex';
+    if (isCache) {
+        showAlert('已加载本地缓存天气数据，正在自动刷新...', 'info');
+    }
+}
+
 // 更新当前天气信息卡片
 async function updateCurrentWeather(city) {
-     try {
+    try {
         const response = await apiRequest(`/weather_data/${city}`);
         console.log("API响应:", response);
         if (response && response.temp) {
@@ -870,7 +888,7 @@ async function updateCurrentWeather(city) {
                 temp: response.temp,
                 humidity: response.humidity,
                 windSpeed: response.wind_speed,
-                windDirection: response.wind_dir,  // 确保使用正确的字段名wind_dir
+                windDirection: response.wind_dir,
                 text: response.text ? response.text : '--'
             };
             console.log("处理后的数据:", latestData);
@@ -878,16 +896,17 @@ async function updateCurrentWeather(city) {
             document.getElementById('currentTemp').textContent = `${latestData.temp || '--'}°C`;
             document.getElementById('currentHumidity').textContent = `${latestData.humidity || '--'}%`;
             document.getElementById('currentWind').textContent = `${latestData.windSpeed || '--'} km/h`;
-            document.getElementById('currentWindDirection').textContent = latestData.windDirection || '--';  // 添加默认值
+            document.getElementById('currentWindDirection').textContent = latestData.windDirection || '--';
             document.getElementById('currentWeather').textContent = latestData.text || '--';
+            return latestData; // 新增：返回数据对象
         } else {
             document.getElementById('currentTemp').textContent = '--°C';
             document.getElementById('currentHumidity').textContent = '--%';
             document.getElementById('currentWind').textContent = '-- km/h';
             document.getElementById('currentWindDirection').textContent = '--';
             document.getElementById('currentWeather').textContent = '暂无数据';
+            return null;
         }
-        return true;
     } catch (error) {
         console.error("更新当前天气信息失败:", error);
         showAlert(`更新当前天气信息失败: ${error.message}`, 'warning');
@@ -896,7 +915,7 @@ async function updateCurrentWeather(city) {
         document.getElementById('currentWind').textContent = '-- km/h';
         document.getElementById('currentWindDirection').textContent = '--';
         document.getElementById('currentWeather').textContent = '暂无数据';
-        return false;
+        return null;
     }
 }
 
@@ -904,13 +923,20 @@ async function updateCurrentWeather(city) {
 async function fetchWeather(city) {
     let cityName = city;
     if (!cityName) {
-      cityName = document.getElementById('cityInput').value;
+        cityName = document.getElementById('cityInput').value;
     }
     if (!cityName) {
         showAlert('请输入城市名称', 'warning');
         return;
     }
 
+    // 1. 先尝试本地缓存
+    const cacheData = loadWeatherCache(cityName);
+    if (cacheData) {
+        renderWeatherData(cityName, cacheData, true); // true表示用缓存
+    }
+
+    // 2. 再异步请求最新数据
     try {
         document.getElementById('loadingCity').textContent = cityName;
         document.getElementById('loading').style.display = 'block';
@@ -920,37 +946,34 @@ async function fetchWeather(city) {
 
         if (response && response.status === 'success') {
             const cityCN = response.city_cn || cityName;
-
-            if (response.status === 'success') {
-                // 只在用户登录时记录搜索活动
-                if (document.cookie.includes('session=')) {
-                    try {
-                        await fetch('/record_search_activity', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            body: JSON.stringify({ city: cityCN })
-                        });
-                    } catch (error) {
-                        console.error('记录搜索活动失败:', error);
-                    }
-                }
-            }
-
             document.getElementById('currentCity').textContent = cityCN;
             document.getElementById('cityDisplay').style.display = 'block';
 
             // 更新天气数据和图表
-            await updateCurrentWeather(cityCN);
+            const weatherData = await updateCurrentWeather(cityCN);
             await updateAllCharts(cityCN);
 
             document.getElementById('overviewCards').style.display = 'flex';
             document.getElementById('chartCards').style.display = 'flex';
 
+            // 3. 保存到本地缓存
+            if (weatherData) {
+                saveWeatherCache(cityCN, weatherData);
+            }
+
+            // 记录搜索行为（仅登录用户会被记录，未登录会返回403但不影响前端）
+            fetch('/record_search_activity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({city: cityCN})
+            });
+
             // 数据加载和图表更新完成后,统一 resize 所有图表
-            Object.values(index).forEach(chart => { if (chart) chart.resize(); });
+            Object.values(index).forEach(chart => {
+                if (chart) chart.resize();
+            });
 
             showAlert(`成功获取${cityCN}的天气数据`, 'success');
         } else {
@@ -1000,12 +1023,15 @@ async function getLocation() {
                 maximumAge: 0
             });
         });
-        const { latitude, longitude } = position.coords;
+        const {latitude, longitude} = position.coords;
         const city = await reverseGeocode(latitude, longitude);
         if (city) {
             document.getElementById('cityInput').value = city;
             document.getElementById('cityInput').style.display = 'block';
             fetchWeather(city);
+            // 记录已定位状态和城市
+            localStorage.setItem('hasLocated', '1');
+            localStorage.setItem('locatedCity', city);
         }
     } catch (error) {
         console.error('定位失败:', error);
@@ -1043,15 +1069,15 @@ async function reverseGeocode(lat, lng) {
 
 // 改进的响应式调整
 function debouncedResize() {
-  clearTimeout(window.resizeTimer); // 清除之前的定时器
-  window.resizeTimer = setTimeout(() => {
-      // 仅当图表容器可见时才 resize
-      if (document.getElementById('chartCards').offsetParent !== null) {
-          Object.values(index).forEach(chart => {
-              if (chart) chart.resize();
-          });
-      }
-  }, 250); // 250毫秒延迟,避免频繁触发
+    clearTimeout(window.resizeTimer); // 清除之前的定时器
+    window.resizeTimer = setTimeout(() => {
+        // 仅当图表容器可见时才 resize
+        if (document.getElementById('chartCards').offsetParent !== null) {
+            Object.values(index).forEach(chart => {
+                if (chart) chart.resize();
+            });
+        }
+    }, 250); // 250毫秒延迟,避免频繁触发
 }
 
 window.addEventListener('resize', debouncedResize);
@@ -1060,8 +1086,8 @@ window.addEventListener('resize', debouncedResize);
 // 更新时间
 function updateTime() {
     const timeElement = document.getElementById('currentTime');
-     if (timeElement) {
-      timeElement.textContent = new Date().toLocaleTimeString();
+    if (timeElement) {
+        timeElement.textContent = new Date().toLocaleTimeString();
     }
 }
 
@@ -1084,40 +1110,76 @@ document.addEventListener('DOMContentLoaded', () => {
             const city = document.getElementById('currentCity').textContent;
 
             if (city && document.getElementById('cityDisplay').style.display !== 'none') {
-                index.tempChart.showLoading({ text: '加载数据中...', color: '#3f51b5' }); // 可选:显示加载
+                index.tempChart.showLoading({text: '加载数据中...', color: '#3f51b5'});
                 await updateTempChart(city, period);
                 index.tempChart.hideLoading();
-                index.tempChart.resize(); // 切换周期后resize
+                index.tempChart.resize();
             }
         });
     });
 
+    // 点击按钮查询城市
     document.getElementById('fetchBtn').addEventListener('click', () => {
         const cityName = document.getElementById('cityInput').value;
-        if(cityName){
+        if (cityName) {
             fetchWeather(cityName);
-        }else{
-           alert('请输入城市名称');
+            localStorage.setItem('lastSearchedCity', cityName);
+        } else {
+            alert('请输入城市名称');
         }
     });
+
+    // 回车查询城市
     document.getElementById('cityInput').addEventListener('keypress', e => {
         if (e.key === 'Enter') {
-          const cityName = document.getElementById('cityInput').value;
-            if(cityName){
-              fetchWeather(cityName);
-            }else{
-              alert('请输入城市名称');
+            const cityName = document.getElementById('cityInput').value;
+            if (cityName) {
+                fetchWeather(cityName);
+                localStorage.setItem('lastSearchedCity', cityName);
+            } else {
+                alert('请输入城市名称');
             }
         }
     });
 
-    const defaultCity = document.getElementById('defaultCity').value;
-    if (defaultCity && defaultCity !== "None") {
-        console.log("检测到默认城市:", defaultCity);
-        fetchWeather(defaultCity);
-    } else {
-        console.log("没有默认城市或默认城市为 None,尝试地理定位");
-        checkGeoLocation(); // 显示地理定位模态框
-    }
+    // 检查用户登录状态并加载相应城市
+    fetch('/check_login')
+        .then(response => response.json())
+        .then(data => {
+            const defaultCity = document.getElementById('defaultCity').value;
+            const lastSearchedCity = localStorage.getItem('lastSearchedCity');
+            const locatedCity = localStorage.getItem('locatedCity');
 
+            if (data.isLoggedIn) {
+                // 用户已登录：优先使用默认城市
+                if (defaultCity && defaultCity !== "None") {
+                    fetchWeather(defaultCity);
+                } else if (lastSearchedCity) {
+                    fetchWeather(lastSearchedCity);
+                } else if (locatedCity) {
+                    fetchWeather(locatedCity);
+                } else if (!localStorage.getItem('hasLocated')) {
+                    checkGeoLocation();
+                } else {
+                    document.getElementById('cityInput').style.display = 'block';
+                    document.getElementById('cityInput').focus();
+                }
+            } else {
+                // 用户未登录：清除缓存并使用定位
+                localStorage.removeItem('lastSearchedCity');
+                if (!localStorage.getItem('hasLocated')) {
+                    checkGeoLocation();
+                } else if (locatedCity) {
+                    fetchWeather(locatedCity);
+                } else {
+                    document.getElementById('cityInput').style.display = 'block';
+                    document.getElementById('cityInput').focus();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('检查登录状态失败:', error);
+            document.getElementById('cityInput').style.display = 'block';
+            document.getElementById('cityInput').focus();
+        });
 });

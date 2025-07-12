@@ -4,59 +4,69 @@
 
 {% block extra_js %}
 <script>
-$(document).ready(function() {
-    // 初始化所有工具提示
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    });
+    $(document).ready(function () {
+        // 初始化所有工具提示
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
 
-    // 显示加载提示
-    function showLoading() {
-        $('#loadingIndicator').show();
-        $('#citiesTable tbody').hide();
-    }
+        // 显示加载提示
+        function showLoading() {
+            $('#loadingIndicator').show();
+            $('#citiesTable tbody').hide();
+        }
 
-    // 隐藏加载提示
-    function hideLoading() {
-        $('#loadingIndicator').hide();
-        $('#citiesTable tbody').show();
-    }
+        // 隐藏加载提示
+        function hideLoading() {
+            $('#loadingIndicator').hide();
+            $('#citiesTable tbody').show();
+        }
 
-    // 显示错误消息
-    function showError(message) {
-        const alertHtml = `
+        // 显示错误消息
+        function showError(message) {
+            const alertHtml = `
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         `;
-        $('#errorContainer').html(alertHtml);
-    }
+            $('#errorContainer').html(alertHtml);
+        }
 
-    // 加载城市数据
-    function loadCities(page = 1) {
-        showLoading();
-        const search = $('#searchInput').val();
-        return $.ajax({
-            url: '/admin/api/cities',
-            method: 'GET',
-            data: { page: page, search: search },
-            success: function(data) {
-                const tbody = $('#citiesTable tbody');
-                tbody.empty();
-                
-                if (data.cities && data.cities.length > 0) {
-                    data.cities.forEach(function(city) {
-                        const row = `
+        // 加载城市数据
+        function loadCities(page = 1) {
+            showLoading();
+            const search = $('#searchInput').val();
+            return $.ajax({
+                url: '/admin/api/cities',
+                method: 'GET',
+                data: {
+                    page: page,
+                    search: search,
+                    _t: new Date().getTime() // 添加时间戳防止缓存
+                },
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                },
+                success: function (data) {
+                    const tbody = $('#citiesTable tbody');
+                    tbody.empty();
+
+                    if (data.cities && data.cities.length > 0) {
+                        data.cities.forEach(function (city) {
+                            const row = `
                             <tr>
                                 <td class="text-center">${city.name}</td>
                                 <td class="text-center">${city.record_count}</td>
                                 <td class="text-center">${city.earliest_date}</td>
                                 <td class="text-center">${city.latest_date}</td>
                                 <td class="text-center">
-                                    <a href="/admin/crawl-weather/${city.name}" class="btn btn-sm btn-info me-2" 
-                                       data-bs-toggle="tooltip" data-bs-placement="top" title="爬取数据">
+                                    <a href="#" class="btn btn-sm btn-info me-2 crawl-btn" 
+                                       data-bs-toggle="tooltip" data-bs-placement="top" title="爬取天气数据"
+                                       data-city="${city.name}">
                                         <i class="fas fa-cloud-download-alt"></i> 爬取
                                     </a>
                                     <a href="/admin/weather-data?city=${encodeURIComponent(city.name)}" class="btn btn-sm btn-primary" 
@@ -66,150 +76,260 @@ $(document).ready(function() {
                                 </td>
                             </tr>
                         `;
-                        tbody.append(row);
-                    });
+                            tbody.append(row);
+                        });
 
-                    // 更新分页
-                    updatePagination(data.current_page, data.total_pages);
-                } else {
-                    tbody.html('<tr><td colspan="5" class="text-center">没有找到城市数据</td></tr>');
+                        // 更新分页
+                        updatePagination(data.current_page, data.total_pages);
+                    } else {
+                        tbody.html('<tr><td colspan="5" class="text-center">没有找到城市数据</td></tr>');
+                    }
+                    hideLoading();
+                },
+                error: function (xhr, status, error) {
+                    hideLoading();
+                    if (xhr.status === 401) {
+                        showError('您没有权限访问此页面，请确保已登录管理员账号');
+                    } else {
+                        showError('加载数据失败，请稍后重试');
+                    }
+                    console.error('Error loading cities:', error);
                 }
-                hideLoading();
-            },
-            error: function(xhr, status, error) {
-                hideLoading();
-                if (xhr.status === 401) {
-                    showError('您没有权限访问此页面，请确保已登录管理员账号');
-                } else {
-                    showError('加载数据失败，请稍后重试');
-                }
-                console.error('Error loading cities:', error);
-            }
-        });
-    }
-
-    // 更新分页
-    function updatePagination(currentPage, totalPages) {
-        const pagination = $('#pagination');
-        pagination.empty();
-    
-        if (totalPages <= 1) {
-            return;
+            });
         }
-    
-        // 上一页按钮
-        pagination.append(`
+
+        // 更新分页
+        function updatePagination(currentPage, totalPages) {
+            const pagination = $('#pagination');
+            pagination.empty();
+
+            if (totalPages <= 1) {
+                return;
+            }
+
+            // 上一页按钮
+            pagination.append(`
             <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
                 <a class="page-link" href="#" data-page="${currentPage - 1}" ${currentPage === 1 ? 'tabindex="-1" aria-disabled="true"' : ''}>上一页</a>
             </li>
         `);
-    
-        // 第一页
-        if (currentPage > 3) {
-            pagination.append(`
+
+            // 第一页
+            if (currentPage > 3) {
+                pagination.append(`
                 <li class="page-item">
                     <a class="page-link" href="#" data-page="1">1</a>
                 </li>
             `);
-            // 省略号
-            if (currentPage > 4) {
-                pagination.append(`
+                // 省略号
+                if (currentPage > 4) {
+                    pagination.append(`
                     <li class="page-item disabled">
                         <span class="page-link">...</span>
                     </li>
                 `);
+                }
             }
-        }
-    
-        // 中间页码
-        const startPage = Math.max(1, currentPage - 2);  // 保持向前显示2页不变
-        const endPage = Math.min(totalPages, currentPage + 4);  // 修改为向后显示4页
-        
-        for (let i = startPage; i <= endPage; i++) {
-            pagination.append(`
+
+            // 中间页码
+            const startPage = Math.max(1, currentPage - 2);  // 保持向前显示2页不变
+            const endPage = Math.min(totalPages, currentPage + 4);  // 修改为向后显示4页
+
+            for (let i = startPage; i <= endPage; i++) {
+                pagination.append(`
                 <li class="page-item ${i === currentPage ? 'active' : ''}">
                     <a class="page-link" href="#" data-page="${i}">${i}</a>
                 </li>
             `);
-        }
-    
-        // 省略号
-        if (endPage < totalPages - 1) {
-            pagination.append(`
+            }
+
+            // 省略号
+            if (endPage < totalPages - 1) {
+                pagination.append(`
                 <li class="page-item disabled">
                     <span class="page-link">...</span>
                 </li>
             `);
-        }
-    
-        // 最后一页
-        if (endPage < totalPages) {
-            pagination.append(`
+            }
+
+            // 最后一页
+            if (endPage < totalPages) {
+                pagination.append(`
                 <li class="page-item">
                     <a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>
                 </li>
             `);
-        }
-    
-        // 下一页按钮
-        pagination.append(`
+            }
+
+            // 下一页按钮
+            pagination.append(`
             <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
                 <a class="page-link" href="#" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'tabindex="-1" aria-disabled="true"' : ''}>下一页</a>
             </li>
         `);
-    }
-
-    // 搜索功能
-    let searchTimeout;
-    $('#searchInput').on('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            loadCities(1);
-        }, 300); // 300ms 防抖
-    });
-
-    // 分页点击事件
-    $('#pagination').on('click', '.page-link', function(e) {
-        e.preventDefault();
-        const page = $(this).data('page');
-        if (!$(this).parent().hasClass('disabled')) {
-            loadCities(page);
         }
-    });
 
-    // 添加刷新按钮点击事件
-    $('#refreshButton').on('click', function() {
-        $(this).find('i').addClass('fa-spin');
-        loadCities(1).then(() => {
-            $(this).find('i').removeClass('fa-spin');
+        // 搜索功能
+        let searchTimeout;
+        $('#searchInput').on('input', function () {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function () {
+                loadCities(1);
+            }, 300); // 300ms 防抖
         });
-    });
 
-    // 初始加载
-    loadCities();
-});
+        // 分页点击事件
+        $('#pagination').on('click', '.page-link', function (e) {
+            e.preventDefault();
+            const page = $(this).data('page');
+            if (!$(this).parent().hasClass('disabled')) {
+                loadCities(page);
+            }
+        });
+
+        // 添加刷新按钮点击事件
+        $('#refreshButton').on('click', function () {
+            $(this).find('i').addClass('fa-spin');
+            loadCities(1).then(() => {
+                $(this).find('i').removeClass('fa-spin');
+            });
+        });
+
+        let currentCrawlRequest = null; // 存储当前的爬取请求
+
+        // 爬取按钮点击事件
+        $(document).on('click', '.crawl-btn', function (e) {
+            e.preventDefault();
+            const cityName = $(this).data('city');
+            const $btn = $(this);
+
+            // 显示加载模态框
+            $('#crawlProgressModal').modal('show');
+            $('#crawlProgressText').text(`正在爬取 ${cityName} 的天气数据...这个过程会很久，请耐心等待`);
+            $('#cancelCrawlBtn').show(); // 显示取消按钮
+
+            // 禁用按钮并显示加载状态
+            $btn.prop('disabled', true);
+            $btn.find('i').addClass('fa-spin');
+
+            // 发送爬取请求
+            currentCrawlRequest = $.ajax({
+                url: `/admin/crawl-weather/${cityName}`,
+                method: 'GET',
+                success: function (response) {
+                    // 更新进度文本
+                    $('#crawlProgressText').text(`爬取完成！${response.message || '数据已更新'}`);
+                    $('#cancelCrawlBtn').hide(); // 隐藏取消按钮
+                    // 延迟关闭模态框
+                    setTimeout(() => {
+                        $('#crawlProgressModal').modal('hide');
+                        // 刷新城市列表
+                        loadCities();
+                    }, 2000);
+                },
+                error: function (xhr) {
+                    // 显示错误信息
+                    $('#crawlProgressText').text(`爬取失败：${xhr.responseJSON?.message || '未知错误'}`);
+                    $('#cancelCrawlBtn').hide(); // 隐藏取消按钮
+                    // 延迟关闭模态框
+                    setTimeout(() => {
+                        $('#crawlProgressModal').modal('hide');
+                    }, 3000);
+                },
+                complete: function () {
+                    // 恢复按钮状态
+                    $btn.prop('disabled', false);
+                    $btn.find('i').removeClass('fa-spin');
+                    currentCrawlRequest = null;
+                }
+            });
+        });
+
+        // 取消爬取按钮点击事件
+        $('#cancelCrawlBtn').on('click', function () {
+            if (currentCrawlRequest) {
+                currentCrawlRequest.abort(); // 中止请求
+                $('#crawlProgressText').text('爬取已取消');
+                $('#cancelCrawlBtn').hide();
+                setTimeout(() => {
+                    $('#crawlProgressModal').modal('hide');
+                }, 2000);
+            }
+        });
+
+        // 爬取所有城市按钮点击事件
+        $('#crawlAllCitiesBtn').on('click', function (e) {
+            e.preventDefault();
+            const $btn = $(this);
+
+            // 显示加载模态框
+            $('#crawlProgressModal').modal('show');
+            $('#crawlProgressText').text('正在爬取所有城市的天气数据...这个过程会很久，请耐心等待');
+            $('#cancelCrawlBtn').show();
+
+            // 禁用按钮并显示加载状态
+            $btn.prop('disabled', true);
+            $btn.find('i').addClass('fa-spin');
+
+            // 发送爬取请求
+            currentCrawlRequest = $.ajax({
+                url: '/admin/crawl-all-cities',
+                method: 'GET',
+                success: function (response) {
+                    $('#crawlProgressText').text('所有城市数据爬取完成！');
+                    $('#cancelCrawlBtn').hide();
+                    setTimeout(() => {
+                        $('#crawlProgressModal').modal('hide');
+                        loadCities();
+                    }, 2000);
+                },
+                error: function (xhr) {
+                    $('#crawlProgressText').text(`爬取失败：${xhr.responseJSON?.message || '未知错误'}`);
+                    $('#cancelCrawlBtn').hide();
+                    setTimeout(() => {
+                        $('#crawlProgressModal').modal('hide');
+                    }, 3000);
+                },
+                complete: function () {
+                    $btn.prop('disabled', false);
+                    $btn.find('i').removeClass('fa-spin');
+                    currentCrawlRequest = null;
+                }
+            });
+        });
+
+        // 添加城市表单提交后自动刷新
+        $('#addCityModal form').on('submit', function () {
+            setTimeout(function () {
+                loadCities(1);
+            }, 1000); // 延迟1秒刷新，确保后端处理完成
+        });
+
+        // 初始加载
+        loadCities();
+    });
 </script>
 {% endblock %}
 
 {% block content %}
-<!-- Page Heading -->
+
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">城市管理</h1>
     <div>
-        <a href="{{ url_for('crawl_all_cities') }}" class="d-none d-sm-inline-block btn btn-sm btn-info shadow-sm me-2">
+        <a href="#" id="crawlAllCitiesBtn" class="d-none d-sm-inline-block btn btn-sm btn-info shadow-sm me-2">
             <i class="fas fa-cloud-download-alt fa-sm text-white-50"></i> 爬取所有城市
         </a>
-        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addCityModal">
+        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" data-bs-toggle="modal"
+           data-bs-target="#addCityModal">
             <i class="fas fa-plus fa-sm text-white-50"></i> 添加城市
         </a>
     </div>
 </div>
 <hr>
 
-<!-- Error Container -->
+
 <div id="errorContainer"></div>
 
-<!-- Content Row -->
 <div class="row">
     <div class="col-12">
         <div class="card shadow mb-4">
@@ -229,16 +349,16 @@ $(document).ready(function() {
                 <div class="table-responsive">
                     <table class="table table-bordered" id="citiesTable" width="100%" cellspacing="0">
                         <thead>
-                            <tr>
-                                <th class="text-center" width="22%">城市名称</th>
-                                <th class="text-center" width="18%">数据记录数</th>
-                                <th class="text-center" width="20%">最早数据日期</th>
-                                <th class="text-center" width="20%">最新数据日期</th>
-                                <th class="text-center" width="20%">操作</th>
-                            </tr>
+                        <tr>
+                            <th class="text-center">城市名称</th>
+                            <th class="text-center">数据记录数</th>
+                            <th class="text-center">最早数据日期</th>
+                            <th class="text-center">最新数据日期</th>
+                            <th class="text-center">操作</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            <!-- 数据将通过 JavaScript 动态加载 -->
+                        <!-- 数据将通过 JavaScript 动态加载 -->
                         </tbody>
                     </table>
                     <!-- 加载提示 -->
@@ -280,10 +400,30 @@ $(document).ready(function() {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="submit" class="btn btn-primary">添加</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- 爬取进度模态框 -->
+<div class="modal fade" id="crawlProgressModal" tabindex="-1" aria-labelledby="crawlProgressModalLabel"
+     aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crawlProgressModalLabel">数据爬取进度</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p id="crawlProgressText" class="mb-3">正在准备爬取数据...</p>
+                <button id="cancelCrawlBtn" class="btn btn-danger" style="display: none;">
+                    <i class="fas fa-times"></i> 取消爬取
+                </button>
+            </div>
         </div>
     </div>
 </div>

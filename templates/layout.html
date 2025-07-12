@@ -9,8 +9,6 @@
     <link rel="stylesheet" href="/static/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="/static/fontawesome-6.4.0/css/all.css">
     <link rel="stylesheet" href="/static/css/index.css">
-    
-    <!-- 添加响应式布局样式 -->
     <style>
         .content-wrapper {
             width: 100%;
@@ -74,7 +72,8 @@
     </style>
 
     <!-- Favicon -->
-    <link rel="icon" href="{{ url_for('static', filename='images/favicons/favicon.ico') }}" type="image/x-icon">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('favicon') }}?v={{ now().timestamp() }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('favicon') }}?v={{ now().timestamp() }}">
 
     {% block extra_head %}{% endblock %}
 </head>
@@ -83,7 +82,7 @@
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-chart-line me-2"></i>气象数据可视化平台
+                <i class="fas fa-chart-line me-2"></i>气象数据可视化分析平台
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -92,7 +91,7 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'data_view' %}active{% endif %}" href="{{ url_for('data_view') }}">
-                            <i class="fas fa-database me-1"></i> 数据管理
+                            <i class="fas fa-database me-1"></i> 天气数据
                         </a>
                     </li>
                     <li class="nav-item">
@@ -109,6 +108,9 @@
                         <a class="nav-link {% if request.endpoint == 'china_map' %}active{% endif %}" href="{{ url_for('china_map') }}">
                             <i class="fas fa-map me-1"></i> 全国视图
                         </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'analysis_view' %}active{% endif %}" href="{{ url_for('analysis_view') }}"><i class="fas fa-chart-line me-1"></i>数据分析</a>
                     </li>
                     {% if current_user.is_authenticated %}
                         <li class="nav-item dropdown">
@@ -159,7 +161,7 @@
     <!-- 页脚 -->
     <footer class="mt-5 py-3 bg-light text-center">
         <div class="container">
-            <p class="mb-0">&copy; 2025 天气数据管理系统 | 版本 1.1.5</p>
+            <p class="mb-0">&copy; 2025 天气数据可视化系统 | 版本 1.1.5</p>
         </div>
     </footer>
 

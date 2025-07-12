@@ -1,3 +1,5 @@
+# spider/weather_spider.py
+
 import os
 import requests
 from bs4 import BeautifulSoup
@@ -11,7 +13,12 @@ from urllib.parse import quote
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from models.historical_models import HistoricalWeather, db, NewHistoricalWeather
-from .data_cleaner import DataCleaner  # 导入 DataCleaner
+from .data_cleaner import DataCleaner
+
+try:
+    from app import crawl_tasks
+except ImportError:
+    crawl_tasks = {}
 
 # 获取当前脚本的目录
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -23,6 +30,7 @@ with open(city_json_path, 'r', encoding='utf-8') as f:
     CITY_PINYIN = json.load(f)
 with open(china_json_path, 'r', encoding='utf-8') as f:
     CITY_CODE = json.load(f)
+
 USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
@@ -35,6 +43,7 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5; rv:127.0) Gecko/20100101 Firefox/127.0'
 ]
+
 # 动态代理池获取函数
 def fetch_free_proxies():
     url = "https://www.proxy-list.download/api/v1/get?type=http"
@@ -47,11 +56,12 @@ def fetch_free_proxies():
     except Exception as e:
         print(f"获取代理失败: {e}")
     return []
+
 # 代理缓存
 PROXY_POOL = []
 PROXY_UPDATE_TIME = None
 PROXY_UPDATE_INTERVAL = timedelta(minutes=30)  # 代理更新间隔：30 分钟
-# 从代理池中随机选择一个代理
+
 def get_random_proxy():
     """从代理池中获取随机代理，并定期更新代理池"""
     global PROXY_POOL, PROXY_UPDATE_TIME
@@ -128,7 +138,7 @@ def fetch_month_data_first(city_name, year, month):
     data_list = []
     proxy_retries = 3  # 代理重试次数
     for attempt in range(proxy_retries):
-        proxy = get_random_proxy() if True else None # 无代理时设为None
+        proxy = get_random_proxy() if True else None
         try:
             # 添加随机延迟
             time.sleep(random.uniform(5, 15))
@@ -270,6 +280,10 @@ def save_history_data(city_name):
     today = date.today()
     current_date = start_date
     while current_date <= today:
+        # 检查是否被取消
+        if crawl_tasks.get(city_name, {}).get('status') == 'cancelled':
+            print(f'爬取任务被取消: {city_name}')
+            return
         year = current_date.year
         month = current_date.month
         print(f"正在抓取 {city_name} {year}-{month:02d}")
@@ -310,6 +324,10 @@ def batch_crawl(city_name=None): # 允许city_name为空
         time.sleep(delay)
     else: # 如果city_name为None， 则爬取所有城市
         for city_name_chn, value in CITY_INFO.items():
+            # 检查是否被取消
+            if crawl_tasks.get('all', {}).get('status') == 'cancelled':
+                print('全部城市爬取任务被取消')
+                return
             print(f"[{datetime.now()}] 正在处理城市: {city_name_chn}")
             save_history_data(city_name_chn)
             # 数据清洗

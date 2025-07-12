@@ -44,9 +44,9 @@ class User(UserMixin, db.Model):
     password_updated_at = db.Column(db.DateTime)
 
     # 关系映射
-    favorites = relationship('FavoriteLocation', backref='user', lazy=True)
-    activities = relationship('UserActivity', backref='user', lazy=True)
-    search_history = relationship('SearchHistory', backref='user', lazy=True)
+    favorites = relationship('FavoriteLocation', backref='user', lazy=True, cascade='all, delete-orphan')
+    activities = relationship('UserActivity', backref='user', lazy=True, cascade='all, delete-orphan')
+    search_history = relationship('SearchHistory', backref='user', lazy=True, cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -63,7 +63,7 @@ class User(UserMixin, db.Model):
 # 用户收藏的位置
 class FavoriteLocation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     name = db.Column(db.String(50), nullable=False)
     added_on = db.Column(db.DateTime, default=datetime.now)
 
@@ -71,7 +71,7 @@ class FavoriteLocation(db.Model):
 # 用户活动记录
 class UserActivity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     activity_type = db.Column(db.String(50), nullable=False)  # search, view, favorite, etc.
     description = db.Column(db.String(200))
     icon = db.Column(db.String(50))  # FontAwesome icon class
@@ -82,6 +82,6 @@ class UserActivity(db.Model):
 # 搜索历史
 class SearchHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     search_query = db.Column(db.String(100), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.now)

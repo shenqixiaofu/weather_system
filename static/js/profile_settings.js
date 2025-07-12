@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 reader.onload = function (e) {
                     document.querySelector('.profile-picture').setAttribute('src', e.target.result);
                 }
-                reader.readAsDataURL(e.target.files[0]);  // 修正这里，需要指定索引<source_id data="0" title="app.py" />
+                reader.readAsDataURL(e.target.files[0]);
             }
         });
     }
@@ -122,60 +122,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     alert(error.message || '发生未知错误，请稍后重试');
                 });
         });
-    }
-
-
-    // 双因素认证切换
-    const twoFactorSwitch = document.getElementById('twoFactorSwitch');
-    if (twoFactorSwitch) {
-        twoFactorSwitch.addEventListener('change', function () {
-            const isEnabled = this.checked;
-
-            // 如果用户要启用双因素认证，需要额外的设置步骤
-            if (isEnabled) {
-                // 可以在这里打开一个模态框，引导用户完成2FA设置
-                // 例如：显示二维码，让用户在认证器应用中扫描
-                updateTwoFactorStatus(true);
-            } else {
-                // 直接发送请求禁用2FA
-                updateTwoFactorStatus(false);
-            }
-        });
-    }
-
-    // 更新双因素认证状态的函数
-    function updateTwoFactorStatus(isEnabled) {
-        fetch('/profile/update-two-factor', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                enabled: isEnabled
-            })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if (isEnabled) {
-                        alert('双因素认证已成功启用');
-                        // 可以在这里打开设置模态框
-                        // $('#setupTwoFactorModal').modal('show');
-                    } else {
-                        alert('双因素认证已禁用');
-                    }
-                } else {
-                    // 如果操作失败，恢复开关状态
-                    twoFactorSwitch.checked = !isEnabled;
-                    alert('操作失败: ' + data.message);
-                }
-            })
-            .catch(error => {
-                // 出错时恢复开关状态
-                twoFactorSwitch.checked = !isEnabled;
-                console.error('Error:', error);
-                alert('发生错误，请稍后再试');
-            });
     }
 
     // 处理通知设置复选框
@@ -313,84 +259,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // 保存原始值，以便在出错时恢复
         select.setAttribute('data-original-value', select.value);
 
-
-        // 对tempUnit的处理
-        const tempUnitSelect = document.getElementById('tempUnit');
-        if (tempUnitSelect) {
-            tempUnitSelect.addEventListener('change', function() {
-                const prefValue = this.value;
-                const originalValue = this.getAttribute('data-original-value');
-                this.disabled = true;
-
-                fetch('/profile/update_preference', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        preference: 'tempUnit',
-                        value: prefValue
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        console.log('温度单位已更新');
-                        $(this).val(prefValue).trigger('change');
-                    } else {
-                        this.value = originalValue;
-                        alert('更新失败: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    this.value = originalValue;
-                    alert('请求失败: ' + error.message);
-                })
-                .finally(() => {
-                    this.disabled = false;
-                });
-            });
-
-            // 保存原始值
-            tempUnitSelect.setAttribute('data-original-value', tempUnitSelect.value);
-        }
-
-        // 对language的处理
-        const LanguageSelect = document.getElementById('language');
-        if (LanguageSelect) {
-            LanguageSelect.addEventListener('change', function() {
-                const prefValue = this.value;
-                const originalValue = this.getAttribute('data-original-value');
-                this.disabled = true;
-
-                fetch('/profile/update_preference', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        preference: 'language',
-                        value: prefValue
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        console.log('语言已更新');
-                        $(this).val(prefValue).trigger('change');
-                    } else {
-                        this.value = originalValue;
-                        alert('更新失败: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    this.value = originalValue;
-                    alert('请求失败: ' + error.message);
-                })
-                .finally(() => {
-                    this.disabled = false;
-                });
-            });
-
-            // 保存原始值
-            LanguageSelect.setAttribute('data-original-value', LanguageSelect.value);
-        }
 
     });
 
@@ -682,4 +550,64 @@ document.getElementById('profile-form').addEventListener('submit', function(e) {
             window.location.reload(); // 添加页面刷新
         }
     });
+});
+
+// 删除账号表单提交逻辑
+const deleteAccountForm = document.getElementById('delete-account-form');
+if (deleteAccountForm) {
+    deleteAccountForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const password = document.getElementById('deleteConfirmPassword').value;
+        const confirmChecked = document.getElementById('confirmDelete').checked;
+        if (!password) {
+            alert('请输入密码');
+            return;
+        }
+        if (!confirmChecked) {
+            alert('请勾选确认删除选项');
+            return;
+        }
+        fetch('/profile/delete_account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: password })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('账号已成功删除，感谢您的使用！');
+                window.location.href = '/';
+            } else {
+                alert('删除失败: ' + (data.message || '未知错误'));
+            }
+        })
+        .catch(error => {
+            alert('请求失败: ' + error.message);
+        });
+    });
+}
+
+// 手机号验证
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            // 只允许输入数字
+            this.value = this.value.replace(/\D/g, '');
+            
+            // 限制最大长度为11位
+            if (this.value.length > 11) {
+                this.value = this.value.slice(0, 11);
+            }
+        });
+
+        // 添加失去焦点时的验证
+        phoneInput.addEventListener('blur', function() {
+            const value = this.value.trim();
+            if (value && !/^1[3-9]\d{9}$/.test(value)) {
+                alert('请输入正确的手机号码格式');
+                this.value = '';
+            }
+        });
+    }
 });

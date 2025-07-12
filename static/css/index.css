@@ -342,6 +342,10 @@ body {
     transform: translateZ(0);
 }
 
+.city-title {
+    color: var(--link-color) !important;
+}
+
 /* 搜索容器样式优化 */
 .search-container {
     position: relative;

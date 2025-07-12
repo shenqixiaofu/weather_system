@@ -222,14 +222,6 @@
     flex-shrink: 0;
 }
 
-.preference-label {
-    flex-grow: 1;
-}
-
-.preference-value {
-    font-weight: bold;
-    color: #3498db;
-}
 
 /* 新增对齐样式 */
 .settings-section {
@@ -251,12 +243,6 @@
 
 .form-switch {
     margin-left: auto;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
 }
 
 .toggle-slider {
@@ -291,21 +277,6 @@ input:checked + .toggle-slider:before {
     transform: translateX(26px);
 }
 
-.empty-state {
-    padding: 2rem;
-    text-align: center;
-}
-
-.empty-state i {
-    font-size: 3rem;
-    color: #6c757d;
-    margin-bottom: 1rem;
-}
-
-.empty-state p {
-    color: #6c757d;
-    margin-bottom: 1.5rem;
-}
 
 @media (max-width: 768px) {
     .user-info {
@@ -317,6 +288,37 @@ input:checked + .toggle-slider:before {
     .stats-grid, .locations-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* 活动列表样式 */
+.activity-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.activity-item {
+    display: flex;
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    transition: background-color 0.2s;
+}
+
+.activity-item:hover {
+    background-color: rgba(0,0,0,0.02);
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    flex-shrink: 0;
 }
 
 /* 针对不同类型活动的图标颜色 */
@@ -333,6 +335,11 @@ input:checked + .toggle-slider:before {
 .activity-icon-favorite {
     background-color: #f8d7da;
     color: #dc3545;
+}
+
+.activity-icon-feedback {
+    background-color: #e8f5e9;
+    color: #388e3c;
 }
 
 .activity-content {
@@ -387,23 +394,6 @@ input:checked + .toggle-slider:before {
 
 .activity-item:hover .activity-actions {
     opacity: 1;
-}
-
-/* 空状态样式 */
-.empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: #6c757d;
-}
-
-.empty-state i {
-    font-size: 48px;
-    margin-bottom: 15px;
-    opacity: 0.5;
-}
-
-.empty-state p {
-    margin-bottom: 20px;
 }
 
 /* 夜间模式样式调整 */
@@ -490,34 +480,5 @@ input:checked + .toggle-slider:before {
     }
 }
 
-/* 活动列表样式 */
-.activity-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
 
-.activity-item {
-    display: flex;
-    padding: 12px 15px;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
-    transition: background-color 0.2s;
-}
-
-.activity-item:hover {
-    background-color: rgba(0,0,0,0.02);
-}
-
-.activity-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 15px;
-    flex-shrink: 0;
-    background-color: #e9ecef;
-    color: #495057;
-}
 

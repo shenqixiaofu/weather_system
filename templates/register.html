@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeatherAuth - 创建观测站</title>
+    <title>WeatherAuth - 创建新用户</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome-6.4.0/css/all.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
 </head>
@@ -14,9 +14,26 @@
             <div class="dynamic-header">
                 <i class="fas fa-sun weather-icon"></i>
                 <h1 class="gradient-text">创建观测账户</h1>
-                <p class="sub-title">加入气象数据可视化平台</p>
+                <p class="sub-title">加入气象数据可视化分析平台</p>
             </div>
-            <form class="neon-form" method="POST" action="{{ url_for('register') }}">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <div class="flash-container">
+                  {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                      <i class="fas fa-exclamation-circle"></i> {{ message }}
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+            <div id="error-container" class="error-container" style="display: none;">
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="error-text"></span>
+                </div>
+            </div>
+            <form class="neon-form" method="POST" action="{{ url_for('register') }}" id="registerForm">
                 <div class="input-group floating-label">
                     <input type="text" id="username" name="username" required pattern="[A-Za-z0-9]{4,20}" title="4-20位字母数字组合" autocomplete="username" placeholder=" ">
                     <label for="username"><i class="fas fa-user-astronaut"></i> 用户名</label>

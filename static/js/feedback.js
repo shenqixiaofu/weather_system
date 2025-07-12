@@ -27,11 +27,12 @@ $(document).ready(function() {
             user_id: userId || null // 如果不存在则传null
         };
 
+        // AJAX请求配置
         $.ajax({
             type: 'POST',
             url: '/submit_feedback',
-            contentType: 'application/json',
-            data: JSON.stringify(formData),
+            contentType: 'application/json',    // 声明发送JSON格式数据
+            data: JSON.stringify(formData),     // 将表单数据序列化为JSON字符串
             success: function(response) {
                 // 隐藏加载动画
                 $('#loader').removeClass('d-flex').addClass('d-none');
@@ -44,6 +45,7 @@ $(document).ready(function() {
                     $('#feedbackForm')[0].reset();
                 }
             },
+            // xhr是XMLHttpRequest对象
             error: function(xhr) {
                 // 隐藏加载动画
                 $('#loader').removeClass('d-flex').addClass('d-none');
