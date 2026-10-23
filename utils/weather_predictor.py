@@ -11,7 +11,7 @@ from matplotlib import rcParams
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.multioutput import MultiOutputRegressor
 from sqlalchemy import create_engine
@@ -204,11 +204,14 @@ class WeatherPredictor:
         print("\n=== 交叉验证结果 ===")
         try:
             # 5折交叉验证
+            # 时序数据必须按时间切分：随机 KFold 会让训练集里混进「未来」样本，
+            # 滞后特征跨越切分点，RMSE 会明显偏乐观。
+            tscv = TimeSeriesSplit(n_splits=5)
             cv_scores = cross_val_score(
                 self.model,
                 self.X_train,
                 self.y_train,
-                cv=5,
+                cv=tscv,
                 scoring='neg_mean_squared_error'
             )
             rmse_scores = np.sqrt(-cv_scores)
@@ -289,6 +292,12 @@ class WeatherPredictor:
         else:
             current_data = processed_data.iloc[-1].copy()
 
+        # 滚动特征要跟着预测推进，需要「最近 N 天」的窗口
+        window_size = 7
+        history_max = list(processed_data['temp_max'].tail(window_size - 1))
+        history_min = list(processed_data['temp_min'].tail(window_size - 1))
+        history_range = list(processed_data['temp_range'].tail(window_size - 1))
+
         for future_date in future_dates:
             current_data['day_of_year'] = float(future_date.timetuple().tm_yday)
             current_data['day_of_week'] = float(future_date.weekday())
@@ -302,22 +311,46 @@ class WeatherPredictor:
             X_pred = np.array([list(pred_features.values())])
             y_pred = self.model.predict(X_pred)
 
+            pred_max = float(y_pred[0][0])
+            pred_min = float(y_pred[0][1])
             predictions.append({
                 'date': future_date.strftime('%Y-%m-%d'),
-                'temp_max': float(y_pred[0][0]),
-                'temp_min': float(y_pred[0][1])
+                'temp_max': pred_max,
+                'temp_min': pred_min
             })
+
+            # 变化率必须用覆盖前的 lag_1 算，覆盖后再相减结果恒为 0
+            prev_max = current_data['temp_max_lag_1']
+            prev_min = current_data['temp_min_lag_1']
 
             for lag in range(3, 1, -1):
                 current_data[f'temp_max_lag_{lag}'] = current_data[f'temp_max_lag_{lag - 1}']
                 current_data[f'temp_min_lag_{lag}'] = current_data[f'temp_min_lag_{lag - 1}']
-            current_data['temp_max_lag_1'] = y_pred[0][0]
-            current_data['temp_min_lag_1'] = y_pred[0][1]
+            current_data['temp_max_lag_1'] = pred_max
+            current_data['temp_min_lag_1'] = pred_min
 
-            current_data['temp_max_change'] = y_pred[0][0] - current_data['temp_max_lag_1']
-            current_data['temp_min_change'] = y_pred[0][1] - current_data['temp_min_lag_1']
+            current_data['temp_max_change'] = pred_max - prev_max
+            current_data['temp_min_change'] = pred_min - prev_min
+            current_data['temp_range'] = pred_max - pred_min
 
-            current_data['temp_range'] = y_pred[0][0] - y_pred[0][1]
+            # 滚动统计同步推进，否则第二天起一直沿用最后一天的真实值
+            history_max.append(pred_max)
+            history_min.append(pred_min)
+            history_range.append(pred_max - pred_min)
+            for series in (history_max, history_min, history_range):
+                if len(series) > window_size:
+                    series.pop(0)
+
+            current_data[f'temp_max_rolling_mean_{window_size}'] = float(np.mean(history_max))
+            current_data[f'temp_min_rolling_mean_{window_size}'] = float(np.mean(history_min))
+            # 历史不足两天时样本标准差无定义，退化为 0
+            current_data[f'temp_max_rolling_std_{window_size}'] = (
+                float(np.std(history_max, ddof=1)) if len(history_max) > 1 else 0.0
+            )
+            current_data[f'temp_min_rolling_std_{window_size}'] = (
+                float(np.std(history_min, ddof=1)) if len(history_min) > 1 else 0.0
+            )
+            current_data['temp_range_rolling_mean_7'] = float(np.mean(history_range))
 
         df_predictions = pd.DataFrame(predictions).astype({
             'date': 'str',
