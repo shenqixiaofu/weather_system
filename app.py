@@ -2609,7 +2609,7 @@ def restore_database(filename):
 
         # 获取数据库连接信息
         db_user = app.config.get('MYSQL_USER', 'root')
-        db_password = app.config.get('MYSQL_PASSWORD', 'fumo666')
+        db_password = app.config.get('MYSQL_PASSWORD', '')
         db_name = app.config.get('MYSQL_DB', 'weather_system_db')
         db_host = app.config.get('MYSQL_HOST', 'localhost')
         
@@ -2748,7 +2748,7 @@ def backup_database():
         app.logger.info(f'开始数据库备份，描述: {backup_description}')
         
         db_user = app.config.get('MYSQL_USER', 'root')
-        db_password = app.config.get('MYSQL_PASSWORD', 'fumo666')
+        db_password = app.config.get('MYSQL_PASSWORD', '')
         db_name = app.config.get('MYSQL_DB', 'weather_system_db')
         db_host = app.config.get('MYSQL_HOST', 'localhost')
 

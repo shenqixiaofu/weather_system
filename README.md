@@ -68,8 +68,8 @@
 
 ### 1. 克隆项目
 ```bash
-git clone [项目地址]
-cd weather-vis-system
+git clone https://gitee.com/shenqixiaofu/weather_system.git
+cd weather_system
 ```
 
 ### 2. 创建虚拟环境
@@ -88,32 +88,53 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. 数据库配置
-1. 创建MySQL数据库：
+### 4. 配置数据库连接
+
+1. 创建 MySQL 数据库：
+
 ```sql
 CREATE DATABASE weather_system_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-2. 修改数据库配置：
-编辑 `config.py` 文件，更新数据库连接信息：
-```python
-SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://username:password@localhost/weather_system_db'
+2. 设置环境变量（`config.py` 不再写死密码，全部从环境变量读取）：
+
+```bash
+export DB_USER=root
+export DB_PASSWORD=你的mysql密码
+export DB_NAME=weather_system_db
 ```
 
-### 5. 初始化数据库
-```bash
-# 创建数据表
-flask db upgrade
+也可以跳过上面三项，直接给整串连接地址：
 
-# 或者使用Python脚本
+```bash
+export DATABASE_URL='mysql+pymysql://root:你的密码@localhost/weather_system_db'
+```
+
+> 要用管理后台的备份/恢复功能，`DB_PASSWORD` 必须设置——它内部走 `mysqldump` 命令行，需要单独传密码。
+> 完整的变量清单见 `.env.example`。
+
+### 5. 初始化数据库
+
+两种方式任选：
+
+```bash
+# 方式一：导入仓库内已有的备份数据（backups/ 下任选一个，含完整历史天气）
+mysql -u root -p weather_system_db < backups/backup_weather_system_db_20250516_172536_987.sql
+
+# 方式二：按模型建空表，数据靠爬虫重新抓
 python -c "from app import app, db; app.app_context().push(); db.create_all()"
 ```
 
-### 6. 配置API密钥
-1. 注册和风天气API账号：https://console.qweather.com
-2. 获取API密钥并更新到 `config.py`：
-```python
-HEFENG_API_KEY = 'your_api_key_here'
+> ⚠️ 不要用 `flask db upgrade`。`migrations/` 里只有一条迁移且 `down_revision = None`，在已有表的库上执行会失败，建表请走上面两种方式。
+
+### 6. 配置 API 密钥
+
+1. 注册和风天气账号：https://console.qweather.com
+2. 拿到密钥后设成环境变量：
+
+```bash
+export HEFENG_API_KEY=你的密钥
+export SECRET_KEY=随便一串随机字符
 ```
 
 ### 7. 启动应用
@@ -213,9 +234,9 @@ flask run --host=0.0.0.0 --port=5000
 
 ## 联系方式
 
-- 项目地址：[GitHub仓库地址]
-- 问题反馈：[Issues页面]
-- 邮箱联系：[your-email@example.com]
+- Gitee 仓库：https://gitee.com/shenqixiaofu/weather_system
+- GitHub 仓库：https://github.com/shenqixiaofu/weather_system
+- 问题反馈：https://github.com/shenqixiaofu/weather_system/issues
 
 ## 致谢
 
