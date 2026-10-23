@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+
+# 本地环境变量
+.env
+
+# 运行时产物
+logs/
+*.log
+
+# 前端依赖（本项目未使用构建流程）
+node_modules/
+
+# 数据库备份刻意不忽略：仓库内的 backups/ 是随项目分发的初始数据
